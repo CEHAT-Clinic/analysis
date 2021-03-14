@@ -15,6 +15,5 @@ a dataframe of the highs and lows of PurpleAir sensor data, organized by sensor
 \description{
 This function collects the daily high and low values of PM2.5 for each sensor into a dataframe.
 It assumes that the data has the columns 'timestamp' and 'longitude'.
-It also uses an EPA correction factor for PurpleAir sensors.
-Anyidentical readings of duplicate type will be dropped
+Any identical readings of duplicate type will be dropped
 }

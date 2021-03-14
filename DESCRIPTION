@@ -1,5 +1,5 @@
 Package: PurpleAirCEHAT
-Title: The PurpleAirCEHAT package handles working with PurpleAir sensor data, including visualizations, models, and cleaning, as part of the CEHAT HMC 2020-21 Clinic Project
+Title: The PurpleAirCEHAT package handles working with PurpleAir sensor data as part of the CEHAT HMC 2020-21 Clinic Project
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Lotenna",

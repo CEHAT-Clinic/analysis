@@ -2,5 +2,8 @@
 
 export(cleanPA)
 export(highslows)
+export(hourlyPA)
+export(lollipop)
 export(southgate)
 export(southgate_grid)
+export(summarySG)
