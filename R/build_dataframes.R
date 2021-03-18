@@ -200,6 +200,206 @@ highslows <- function(data) {
 
 
 
+#' This function takes in five parameters: highIndexBreakpoint,lowIndexBreakpoint,
+#' highConcentrationBreakpoint,lowConcentrationBreakpoint,pm25Concentration, in
+#' that order. It then calculates the AQI guven the specified indices.
+#' @param highIndexBreakpoint,lowIndexBreakpoint, highConcentrationBreakpoint,lowConcentrationBreakpoint,pm25Concentration
+#' @return it returns the AQI that corresponds to the given PM2.5 measurement
+#' @export
+
+
+indexCalculation <-function(highIndexBreakpoint,lowIndexBreakpoint,
+                            highConcentrationBreakpoint,lowConcentrationBreakpoint,pm25Concentration){
+  
+  indexRange <- highIndexBreakpoint - lowIndexBreakpoint
+  
+  concentrationRange <- highConcentrationBreakpoint - lowConcentrationBreakpoint
+  rangeRelativeConcentration <- pm25Concentration - lowConcentrationBreakpoint
+  
+  return (
+    (indexRange / concentrationRange) * rangeRelativeConcentration +
+      lowIndexBreakpoint)
+}
+
+
+
+#' This function takes in one parameters:pm25Concentration.
+#'  It then calculates the AQI given that specified value.
+#' @param pm25Concentration
+#' @return it returns the AQI that corresponds to the given PM2.5 measurement
+#' @export
+
+
+
+aqiFromPm25 <- function(pm25Concentration) {
+  # Source of bound values is Table 6 of the paper at
+  # https://www.airnow.gov/sites/default/files/2018-05/aqi-technical-assistance-document-may2016.pdf
+  # EPA formulas require PM 2.5 to be truncated to one decimal place
+  
+  truncatedPm25 <- floor(10 * pm25Concentration) / 10
+  
+  aqi <-  0
+  highAqiBound <-  0
+  lowAqiBound <-  0
+  highPmBound <-  0
+  lowPmBound <-  0
+  
+  # Assign appropriate bounds
+  if (truncatedPm25 < 12.1) {
+    highAqiBound <-  50
+    lowAqiBound <-  0
+    highPmBound <-  12
+    lowPmBound <-  0
+  } else if (truncatedPm25 < 35.5) {
+    highAqiBound <-  100
+    lowAqiBound <-  51
+    highPmBound <-  35.4
+    lowPmBound <-  12.1
+    
+  } else if (truncatedPm25 < 55.5) {
+    highAqiBound <-  150
+    lowAqiBound <-  101
+    highPmBound <-  55.4
+    lowPmBound <-  35.5
+    
+  } else if (truncatedPm25 < 150.5) {
+    highAqiBound <-  200
+    lowAqiBound <-  151
+    highPmBound <-  150.4
+    lowPmBound <-  55.5
+    
+  } else if (truncatedPm25 < 250.5) {
+    highAqiBound <-  300
+    lowAqiBound <-  201
+    highPmBound <-  250.4
+    lowPmBound <-  150.5
+    
+  } else if (truncatedPm25 < 350.5) {
+    highAqiBound <-  400
+    lowAqiBound <-  301
+    highPmBound <-  350.4
+    lowPmBound <-  250.5
+    
+  } else if (truncatedPm25 < 500.5) {
+    highAqiBound <-  500
+    lowAqiBound <-  401
+    highPmBound <-  500.4
+    lowPmBound <-  350.5
+  }
+  
+  # Values beyond the range are indicated by infinite values
+  if (truncatedPm25 < 0) {
+    aqi <-  -Inf
+  } else if (truncatedPm25 >= 500.5) {
+    aqi <-  Inf
+  } else {
+    aqi <-  indexCalculation(
+      highAqiBound,
+      lowAqiBound,
+      highPmBound,
+      lowPmBound,
+      truncatedPm25
+    )
+  }
+  # /* eslint-enable no-magic-numbers */
+  return (round(aqi, digits = 0))
+}
+
+
+#' This function takes in one parameter:degrees.
+#'  It then calculates the radian of that specified value.
+#' @param degrees
+#' @return it returns the radian value of that degree value
+#' @export
+
+toRad <- function(degrees) {
+  return ((pi*degrees)/180)
+}
+
+
+
+#' This function takes in four parameters: lat_1,long_1,lat_2,long_2.
+#' It then calculates the distance between these two locations using
+#' the Haversine formula.
+#' @param latitude of the first location, longitude of the first location, latitude
+#' of the second location, longitude of the second location
+#' @return it returns the distance between these locations in miles
+#' @export
+#'
+
+distance <- function(lat_1,long_1,lat_2,long_2) {
+  # converting all degrees to radians
+  lat1 <- toRad(lat_1)
+  long1 <- toRad(long_1)
+  lat2 <- toRad(lat_2)
+  long2 <- toRad(long_2)
+  
+  # calculating dist using the Haversine Formula
+  answer <- 2 * asin(sqrt((sin((lat2 - lat1)/2))^2 +
+                            cos(lat1) * cos(lat2)*
+                            (sin((long2 - long1)/2))^2))
+  
+  # use 6371 instead of 3956 to calculate in kilometers
+  return (answer*3956)
+}
+
+
+
+#' This function takes in data, specifically the name of a csv file with
+#' timestamps, ChannelA, ChannelB, humidity, latitude and longitude
+#' It then cleans the data frame and returns AQI values.
+#' @param data, specifically the name of a csv file
+#' @return it returns a dataframe with hourly time, AQI, humidity, latitude and longitude
+#' @export
+#'
+
+AQIdataframe <- function(data){
+  
+  myData <- cleanPA(data)
+  myAQIValues <- lapply(myData[2],aqiFromPm25)
+  myAQIData <- data.frame(myData$datehour, myAQIValues, myData$humidity,
+                          myData$latitude, myData$longitude)
+  colnames(myAQIData) <- c("datehour","AQI","humidity","latitude","longitude")
+  
+  return (myAQIData)
+}
+
+
+
+#' This function takes in data, specifically the name of a csv file with
+#' timestamps, PM2.5, humidity, latitude and longitude
+#' It then cleans the changes the timestamps so that they match the
+#' timstamps of the purple air data.
+#' @param data, specifically the name of a csv file
+#' @return it returns a dataframe with hourly time (in the format of Ymd hms),
+#' PM2.5, humidity, latitude and longitude
+#' @export
+#'
+cleanAQMD <- function(data){
+  
+  for (i in (1:length(data$Date.Time))){
+    
+    date1 <- data[i,1]
+    
+    if(substr(date1,10,10) == ' '){
+      date <- substr(date1,1,10)
+      date <- format(strptime(date, "%m/%d/%Y"), format="%Y-%m-%d")
+      time <- substring(date1, 11,last = 1000000L)
+      time <- format(strptime(time, "%I:%M:%S %p"), format="%H:%M:%S")
+      data[i,1] <- paste(date, time,sep = ' ')
+    }
+    else {
+      date <- substr(date1,1,11)
+      date <- format(strptime(date, "%m/%d/%Y"), format="%Y-%m-%d")
+      time <- substring(date1, 12,last = 1000000L)
+      time <- format(strptime(time, "%I:%M:%S %p"), format="%H:%M:%S")
+      data[i,1] <- paste(date, time,sep = ' ')
+    }
+  }
+  return(data)
+}
+
+
 
 
 #' Down Sensors?
