@@ -6,6 +6,12 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+suppressPackageStartupMessages({library(PurpleAirCEHAT)
+library(dplyr)
+library(plotly)
+library(tidyverse)})
+
 ```
 
 This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
@@ -39,9 +45,7 @@ renderPlot({
 
 
 ```{r highlow}
-library(PurpleAirCEHAT)
-library(dplyr)
-library(tidyverse)
+
 PAfull <- read.csv("C:/Users/jimzi/Downloads/pm25_2020_12_01T07_59_59_000Z_to_2021_01_01T08_00_00_000Z.csv")
 
 PAfull <- PurpleAirCEHAT::cleanPA(PAfull)
@@ -84,8 +88,8 @@ inputPanel(
 
 
 
-renderPlot({
-  print(ggplot(data=PAhi_lo[PAhi_lo$names == input$sensor,], aes(x=day, y=PM2.5, group = day)) +
+renderPlotly({
+  hilo <- ggplot(data=PAhi_lo[PAhi_lo$names == input$sensor,], aes(x=day, y=PM2.5, group = day)) +
         geom_line(lwd=1)+
         geom_point(data=PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300  & PAhi_lo$names == input$sensor, ], 
                  aes(x=day, y=PM2.5, group = type, col="high"), size=5)+
@@ -95,7 +99,9 @@ renderPlot({
         labs(x = "Day", y = "PM2.5 (µg/m³)") +
         scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +    scale_fill_manual(name="Type",values=wessy_pal) +
         ggtitle(input$sensor) +
-        theme_minimal())
+        theme_minimal()
+  
+  ggplotly(hilo)
 })
 
 renderPlot({
@@ -105,6 +111,33 @@ renderPlot({
 })
 
 ```
+
+
+
+```{r density}
+
+
+
+
+
+renderPlot({print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=hour, group = timeofday))+
+        geom_histogram(aes(y=after_stat(count/nrow(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,])), color=timeofday, fill=timeofday),  alpha=0.7, stat="count", bins=4, lwd=1)+
+        #geom_point(aes(, ycolor=timeofday, alpha=0.01))+
+        geom_density(alpha = 0.1, fill = "grey")+
+        labs(x = "Hour", y = "Density") +
+        ggtitle("Density of Peak PM2.5 Values Over 24-hour Period")+
+        scale_color_brewer(palette="Dark2")+
+        scale_fill_brewer(palette="Dark2")+
+        theme_minimal()
+)
+})
+
+
+```
+
+
+
+
 
 
 

@@ -112,18 +112,22 @@ hourlyPA <- function(data){
 
 #' Hourly Summary Data for South Gate
 #'
-#' This function aggregates HOURLYPA data (output from the hourlyPA function) by hour for mean, median, and count of sensors
+#' This function aggregates data (output from the hourlyPA/cleanPA function) by hour for mean, median, max, min, and count of sensors
 #' It assumes that the data has the columns 'timestamp', 'day', 'hour' 'PM2.5.
 #'
-#' @param data the output dataframe of the hourlyPA function
-#' @return a dataframe of the South Gate data, including *weighted* sensor averages, sensor median, the max, and the min, and active count.
+#' @param data the output dataframe of the hourlyPA or cleanPA functions
+#' @return a dataframe of the holistic South Gate data, including *weighted* sensor averages, sensor median, the max, and the min, and active count.
 #' @export
 
 summarySG <- function(data) {
 
-  avgSG <- aggregate(cbind(PM2.5, hour,day) ~ timestamp,
+  data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
+
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp))
+
+  avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
                      data = data[lubridate::month(data$timestamp) >1,],
-                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = max(x), min=min(x)  ))
+                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = round(max(x),2), min=round(min(x),2)  ))
 
   PM2.5.median <- avgSG$PM2.5[,2]
   PM2.5.count <- avgSG$PM2.5[,3]
@@ -132,8 +136,8 @@ summarySG <- function(data) {
 
   avgSG <- data.frame()
 
-  avgSG <- aggregate(cbind(PM2.5, hour,day) ~ timestamp,
-                     data = data[month(data$timestamp) >1,], FUN= function(x) {round(mean(x),2)} )
+  avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
+                     data = data[lubridate::month(data$timestamp) >1,], FUN= function(x) {round(mean(x),2)} )
 
   avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.count)
 
@@ -142,7 +146,6 @@ summarySG <- function(data) {
   avgSG
 
 }
-
 
 
 
