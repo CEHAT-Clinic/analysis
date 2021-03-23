@@ -8,9 +8,8 @@ suppressPackageStartupMessages({
   library(boot)
   library(lubridate)
   library(gstat)
-  
-  devtools:: install('purpleairfunctions')
-  library(purpleairfunctions)
+
+  devtools:: install_github("CEHAT-Clinic/analysis")
 })
 
 test1 <- read.csv("december2020_readings.csv")
@@ -21,12 +20,12 @@ myData <- cleanPA(test1)
 
 # schools
 
-schools <- data.frame("schools" = c("Miramonte Elementary", "Russell Elementary", 
-                                    "New Charles Drew Middle", "Florence Elementary", 
-                                    "Middleton Elementary", "Miles Elementary", 
-                                    "Walnut Elementary", "Corona Elementary", 
-                                    "Teresa Hughes Elementary", "South Gate Middle", 
-                                    "South East High", "Warren High"), 
+schools <- data.frame("schools" = c("Miramonte Elementary", "Russell Elementary",
+                                    "New Charles Drew Middle", "Florence Elementary",
+                                    "Middleton Elementary", "Miles Elementary",
+                                    "Walnut Elementary", "Corona Elementary",
+                                    "Teresa Hughes Elementary", "South Gate Middle",
+                                    "South East High", "Warren High"),
                       latitude = c(33.9781,33.9610,33.9608,33.9738,33.9800,33.9779,
                                    33.9680,33.9757,33.9661,33.9519, 33.9450,33.9360),
                       longitude = c(-118.2499,-118.2519,-118.2481,-118.2388,-118.2282,
@@ -43,7 +42,7 @@ superfundSites <- data.frame("site" = c("Cooper Drum", "Jervis B Webb", "Souther
 # parks
 # roosevelt park is not in SG, it's nearby
 
-parks <- data.frame("park" = c("Roosevelt", "Clara Street", "Camp Little Bear", 
+parks <- data.frame("park" = c("Roosevelt", "Clara Street", "Camp Little Bear",
                                "Stanford Avenue", "South Gate","Cudahy"),
                     latitude = c(33.9707,33.9657, 33.9763,33.9514, 33.9460,33.9594),
                     longitude = c(-118.2420,-118.1816,-118.1990,-118.2224, -118.1852,
@@ -51,7 +50,7 @@ parks <- data.frame("park" = c("Roosevelt", "Clara Street", "Camp Little Bear",
 
 # medical centers
 
-medicalCenters <- data.frame("medical center" = c("Tweedy", "Sanchez","Clinica Maria", 
+medicalCenters <- data.frame("medical center" = c("Tweedy", "Sanchez","Clinica Maria",
                                                   "Loyola", "Guadalupano", "United"),
                              latitude = c(33.9434, 33.9543,33.9627,33.9435,33.9421,
                                           33.9421),
@@ -61,7 +60,7 @@ medicalCenters <- data.frame("medical center" = c("Tweedy", "Sanchez","Clinica M
 # roosevelt park and watts senior centers are not in South Gate, just very close
 
 seniorCenters <- data.frame("senior centers" = c("South Gate", "Watts","Roosevelt Park",
-                                                 "South Gate Senior Villas", 
+                                                 "South Gate Senior Villas",
                                                  "Vista Verenda Assisted Living"),
                             latitude = c(33.9421,33.9458,33.9700,33.9437,33.9351),
                             longitude = c(-118.1857,-118.2441,-118.2420, -118.2066,
@@ -154,7 +153,7 @@ for (i in (1:length(seniorCenters$senior.centers))) {
 
 # if you want to look up the AQI (and the distance between the sensors
 # and sensitive locations) at a certain date and hour,
-# substitute the date here 
+# substitute the date here
 
 filter(myAQIData, datehour == '2020-12-18 15:00:00') # <------ HERE
 
