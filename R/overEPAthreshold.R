@@ -1,27 +1,4 @@
 suppressPackageStartupMessages({
-  library(ggplot2)
-  library(geoR)
-  library(data.table)
-  library(gridGraphics)
-  library(gridExtra)
-  library(lattice)
-  #for the mapping
-  library(dplyr)
-  library(gdata)
-  library(sf)
-  library(tigris)
-  #you need to let R know to bring in the spatial data as sf objects
-  options(tigris_class = "sf")
-  library(tmap)
-  library(raster)
-  library(Ecdat)
-  library(boot)
-  library(lubridate)
-  library(caret)
-  # detach(package:gstat)
-  library(gstat)
-  library(Metrics)
-  library(zoo)
   library(usethis)
   library(testthat)
   library(devtools)
@@ -38,11 +15,11 @@ myData <- test1
 # for this, specifically, we are looking at 24 hour average periods
 # that surpass the EPA threshold in December
 
-Sensor1 <- filter(myData, latitude == '33.9509')
-Sensor2 <- filter(myData, latitude == '33.9606')
-Sensor3 <- filter(myData, latitude == '33.9498')
-Sensor4 <- filter(myData, latitude == '33.9619')
-Sensor5 <- filter(myData, latitude == '33.9411')
+Sensor1 <- dplyr::filter(myData, latitude == '33.9509')
+Sensor2 <- dplyr::filter(myData, latitude == '33.9606')
+Sensor3 <- dplyr::filter(myData, latitude == '33.9498')
+Sensor4 <- dplyr::filter(myData, latitude == '33.9619')
+Sensor5 <- dplyr::filter(myData, latitude == '33.9411')
 
 # finds the rolling mean for each sensor
 sensor1rm <- data.frame(rollingmean = rollmean(Sensor1$PM2.5, 24))
@@ -60,20 +37,20 @@ sensor4rm[nrow(sensor4rm)+ (length(Sensor4$PM2.5) - length(sensor4rm$rollingmean
 sensor5rm[nrow(sensor5rm)+ (length(Sensor5$PM2.5) - length(sensor5rm$rollingmean)),] <- NA
 
 # merging the dataframes together so that it includes rolling mean
-Sensor1 <- bind_cols(Sensor1, sensor1rm)
-Sensor2 <- bind_cols(Sensor2, sensor2rm)
-Sensor3 <- bind_cols(Sensor3, sensor3rm)
-Sensor4 <- bind_cols(Sensor4, sensor4rm)
-Sensor5 <- bind_cols(Sensor5, sensor5rm)
+Sensor1 <- dplyr::bind_cols(Sensor1, sensor1rm)
+Sensor2 <- dplyr::bind_cols(Sensor2, sensor2rm)
+Sensor3 <- dplyr::bind_cols(Sensor3, sensor3rm)
+Sensor4 <- dplyr::bind_cols(Sensor4, sensor4rm)
+Sensor5 <- dplyr::bind_cols(Sensor5, sensor5rm)
 
 
 # finds the days that the rolling mean is over the EPA threshold
 # for 24hr, it's 35 micrograms per cubic meter
-daysOverSensor1 <- filter(Sensor1, rollingmean >= 35)
-daysOverSensor2 <- filter(Sensor2, rollingmean >= 35)
-daysOverSensor3 <- filter(Sensor3, rollingmean >= 35)
-daysOverSensor4 <- filter(Sensor4, rollingmean >= 35)
-daysOverSensor5 <- filter(Sensor5, rollingmean >= 35)
+daysOverSensor1 <- dplyr::filter(Sensor1, rollingmean >= 35)
+daysOverSensor2 <- dplyr::filter(Sensor2, rollingmean >= 35)
+daysOverSensor3 <- dplyr::filter(Sensor3, rollingmean >= 35)
+daysOverSensor4 <- dplyr::filter(Sensor4, rollingmean >= 35)
+daysOverSensor5 <- dplyr::filter(Sensor5, rollingmean >= 35)
 
 #plotting for the rolling mean
 plot(Sensor1$datehour, Sensor1$rollingmean)

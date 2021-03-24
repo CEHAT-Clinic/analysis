@@ -13,6 +13,7 @@ Imports:
   lubridate (>= 1.7.9.2),
   sf,
   sp (>= 1.4-2),
+  stats,
   tidyverse,
   tigris
 Encoding: UTF-8
