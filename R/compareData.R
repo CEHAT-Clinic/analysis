@@ -33,7 +33,7 @@ suppressPackageStartupMessages({
 test1 <- read.csv("december2020_readings.csv")
 
 #cleaned PM2.5 data
-myData <- cleanPA(test1)
+myData <- test1
 
 
 Sensor1 <- filter(myData, latitude == '33.9509')
