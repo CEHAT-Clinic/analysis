@@ -2,7 +2,6 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(geoR)
   library(data.table)
-  library(ipdw)
   library(gridGraphics)
   library(gridExtra)
   library(lattice)
@@ -23,7 +22,11 @@ suppressPackageStartupMessages({
   library(gstat)
   library(Metrics)
   library(zoo)
-  
+  library(usethis)
+  library(testthat)
+  library(devtools)
+  devtools:: install_github("CEHAT-Clinic/analysis")
+  library(PurpleAirCEHAT)
 })
 
 # reading the csv file
@@ -32,10 +35,6 @@ test1 <- read.csv("december2020_readings.csv")
 #cleaned PM2.5 data
 myData <- cleanPA(test1)
 
-# *************find the days that have readings over the EPA threshold***************
-
-# for this, specifically, we are looking at 24 hour average periods
-# that surpass the EPA threshold in December
 
 Sensor1 <- filter(myData, latitude == '33.9509')
 Sensor2 <- filter(myData, latitude == '33.9606')
@@ -48,7 +47,7 @@ Sensor5 <- filter(myData, latitude == '33.9411')
 otherCityData <- read.csv("long_beach_pm2.5.csv")
 
 # --- changing the time format for the long beach data
-otherCityData <- cleanAQMD(otherCityData)
+#otherCityData <- cleanAQMD(otherCityData)
 # --- filtering out the rows with no pm2.5 data
 otherCityData <- filter(otherCityData, Value != "--")
 
@@ -87,9 +86,9 @@ for (i in 1:length(ourData1$datehour)) {
 boxplot(ourData1$otherCityPM, ourData1$SouthGatePM, main = "PM2.5 in Other City vs South Gate",
         names = c("Other City","South Gate"), outline=FALSE)
 
-# line chart 
+# line chart
 x <- strptime(ourData1$datehour, '%Y-%m-%d %H:%M:%S')
-plot(x,ourData1$SouthGatePM,main = "otherCity vs South Gate", xlab= "day", ylab= "PM2.5", 
+plot(x,ourData1$SouthGatePM,main = "otherCity vs South Gate", xlab= "day", ylab= "PM2.5",
      type="l",col="red")
 lines(x,ourData1$otherCityPM,col="green")
 
