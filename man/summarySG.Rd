@@ -7,12 +7,12 @@
 summarySG(data)
 }
 \arguments{
-\item{data}{the output dataframe of the hourlyPA function}
+\item{data}{the output dataframe of the hourlyPA or cleanPA functions}
 }
 \value{
-a dataframe of the South Gate data, including \emph{weighted} sensor averages, sensor median, the max, and the min, and active count.
+a dataframe of the holistic South Gate data, including \emph{weighted} sensor averages, sensor median, the max, and the min, and active count.
 }
 \description{
-This function aggregates HOURLYPA data (output from the hourlyPA function) by hour for mean, median, and count of sensors
+This function aggregates data (output from the hourlyPA/cleanPA function) by hour for mean, median, max, min, and count of sensors
 It assumes that the data has the columns 'timestamp', 'day', 'hour' 'PM2.5.
 }

@@ -7,10 +7,12 @@ runtime: shiny
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-suppressPackageStartupMessages({library(PurpleAirCEHAT)
+suppressPackageStartupMessages({
 library(dplyr)
 library(plotly)
-library(tidyverse)})
+library(tidyverse)
+devtools::install_github("CEHAT-Clinic/analysis")
+library(PurpleAirCEHAT)})
 
 ```
 
@@ -46,7 +48,7 @@ renderPlot({
 
 ```{r highlow}
 
-PAfull <- read.csv("C:/Users/jimzi/Downloads/pm25_2020_12_01T07_59_59_000Z_to_2021_01_01T08_00_00_000Z.csv")
+PAfull <- read.csv("december2020_readings.csv")
 
 PAfull <- PurpleAirCEHAT::cleanPA(PAfull)
 
@@ -133,6 +135,70 @@ renderPlot({print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], 
 })
 
 
+```
+
+
+
+
+```{r compareData, echo=FALSE}
+
+# reading the csv file
+test <- read.csv("december2020_readings.csv")
+
+#cleaned PM2.5 data
+SGData <- PurpleAirCEHAT::cleanPA(test)
+
+
+Sensor1 <- dplyr::filter(SGData, latitude == '33.95094')
+Sensor2 <- dplyr::filter(SGData, latitude == '33.9606')
+Sensor3 <- dplyr::filter(SGData, latitude == '33.9498')
+Sensor4 <- dplyr::filter(SGData, latitude == '33.9619')
+Sensor5 <- dplyr::filter(SGData, latitude == '33.9411')
+
+# ************ compare the South Gate data to the AQMD data *************
+
+otherCityData <- read.csv("long_beach_pm2.5.csv")
+
+# --- making a data frame with matching dates (for Sensor1)
+
+#filtering out the non common days
+ourData <- PurpleAirCEHAT::matchingDays(Sensor1, otherCityData)
+
+# ----- comparing the data ------
+
+# comparing the two data sets using graphics
+
+# boxplot
+boxplot(ourData$otherCityPM, ourData$SouthGatePM, main = "PM2.5 in Other City vs South Gate",
+        names = c("Other City","South Gate"), outline=FALSE)
+
+# line chart
+x <- strptime(ourData$timestamp, '%Y-%m-%d %H:%M:%S')
+plot(x,ourData$southGatePM,main = "otherCity vs South Gate", xlab= "day", ylab= "PM2.5",
+     type="l",col="red")
+lines(x,ourData$otherCityPM,col="green")
+
+# stacked barchart
+counts <- table(ourData$otherCityPM, x)
+
+barplot(counts)
+
+# comparing the data using t-tests
+
+
+ttest = stats::t.test(ourData$otherCityPM,ourData$SouthGatePM)
+
+# check if the difference is statistically different
+
+if (ttest$p.value < (.05) && ttest$statistic > 0) {
+  print("we can not accept the null hypothesis. the Other City data is statistically worse than the South Gate data.")
+}
+if (ttest$p.value < (.05) && ttest$statistic < 0) {
+  print("we can not accept the null hypothesis. the South Gate data is statistically worse than the Other City data.")
+}
+if (ttest$p.value >= (.05)){
+  print("we can not reject the null hypothesis")
+}
 ```
 
 
