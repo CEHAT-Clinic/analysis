@@ -233,6 +233,7 @@ cleanAQMD <- function(data){
   data <- as.data.frame(data)
   data <- data[-c(1,2),]
   names(data)[1] <- 'Date.Time'
+  names(data)[2] <- 'Value'
 
   data <- dplyr::filter(data, Value != "--")
   for (i in (1:length(data$Date.Time))){
