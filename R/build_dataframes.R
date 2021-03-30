@@ -231,9 +231,12 @@ AQIdataframe <- function(data){
 cleanAQMD <- function(data){
   # converting aqmd csv to usable data frame
   data <- as.data.frame(data)
-  data <- data[-c(1,2),]
+  data <- data[-c(1,2),-c(5)]
   names(data)[1] <- 'Date.Time'
   names(data)[2] <- 'Value'
+  names(data)[3] <- 'Unit'
+  names(data)[4] <- 'Averaging.Hour'
+
 
   data <- dplyr::filter(data, Value != "--")
   for (i in (1:length(data$Date.Time))){
