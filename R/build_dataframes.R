@@ -13,8 +13,10 @@
 cleanPA <- function(data){
   time_clean = lubridate::ymd_hms(data$timestamp, tz="America/Los_Angeles")
 
+
   data$timestamp <- time_clean
   data <- data[order(data$timestamp),]
+
   data[,5] <- round(data[,5],5)
   data[,6] <- round(data[,6],4)
 
@@ -35,7 +37,6 @@ cleanPA <- function(data){
 
   data
 }
-
 
 #' Aggregate Data by Hour
 #'
@@ -218,101 +219,6 @@ AQIdataframe <- function(data){
 
 
 
-#'
-#' This function cleans up the raw readings from the PA sensors and sets up a data frame.
-#' It assumes that the data has the columns
-#' c('timestamp', "channelAPm25", "channelBPm25", "humidity", "latitude", "longitude") in that order.
-#' It also uses an EPA correction factor for PurpleAir sensors.
-#' Any readings with faulty channel A/B values will be dropped
-#'
-#' @param data a .csv of PurpleAir sensor data from the CEHAT website
-#' @return a dataframe of the full PurpleAir sensor data (by the hour), with corrected timezone and combined channels
-#' @export
-
-hourlyCleanPA<- function(test1){
-
-#defining relevant variables from csv file
-chA <- test1$channelAPm25
-chB <- test1$channelBPm25
-longitude <- test1$longitude
-latitude <- test1$latitude
-time <- test1$timestamp
-humidity <- test1$humidity
-
-#making dataframe
-df <- data.frame(time,chA,chB,longitude,latitude,humidity)
-
-#defining constants
-raw_Threshold = 5
-percent_Threshold = .7
-
-#taking the mean and difference of channelA and channelB at every row
-df$mean <- rowMeans(df[,c('chA','chB')],na.rm=TRUE)
-df$difference <- abs(df$chA - df$chB)
-
-#filtering out the numbers that exceed the thresholds
-df <- dplyr::filter(df, difference <= raw_Threshold & difference/mean <= percent_Threshold)
-
-#redefining PM2.5 according to the EPA equation
-df$PM2.5 <- df$mean * .534 - df$humidity * .0844 + 5.604
-
-#redefining our variables, now that we have the valid values
-time<- df$time
-PM2.5 <- df$PM2.5
-humidity <- df$humidity
-latitude <- df$latitude
-longitude <- df$longitude
-
-#making our new dataframe
-test <- data.frame(time,PM2.5,humidity,latitude,longitude)
-
-#divide the time into year,month,day, hour, minute, seconds
-timestamp = lubridate::ymd_hms(test$time,tz="America/Los_Angeles")
-
-#reordering our dataframe based on time
-test$time <- timestamp
-test <- test[order(test$time),]
-
-#rounding the longitude and latitude
-latitude <- round(test[,4],4)
-longitude <- round(test[,5],4)
-
-
-#break up data by hour and put it in the dataframe
-test$time <- cut(test$time, breaks="hour")
-timestamp <- test$time
-PAhourly <- data.frame(timestamp, PM2.5, humidity, latitude, longitude)
-
-PAhourly1 <- data.frame(Date=as.Date(character()),
-                        PM2.5 = double(),
-                        humidity=double(),
-                        latitude=double(),
-                        longitude=double())
-
-#get the different sensor locations
-locations <- unique(PAhourly[,c(5,4)])
-sensorNum <- nrow(locations)
-
-#aggregate the data to get hourly averages per sensor location
-for (i in 1:sensorNum) {
-
-  data <- PAhourly[latitude == locations[i,2],]
-  agg <- aggregate(data,by=list(data$timestamp),FUN=mean)
-  PAhourly1 <- rbind(PAhourly1,agg)}
-
-#cleaning up our new dataframe
-PAhourly1$timestamp <- PAhourly1$Group.1
-PAhourly1$Group.1 <- NULL
-PAhourly1$humidity <- round(PAhourly1[,3],1)
-PAhourly1$PM2.5 <- round(PAhourly1[,2],0)
-return (PAhourly1)
-}
-
-
-
-
-
-
 #' This function takes in data, specifically the name of a read csv file with
 #' timestamps, PM2.5, humidity, latitude and longitude
 #' It then cleans the changes the timestamps so that they match the
@@ -343,7 +249,8 @@ cleanAQMD <- function(data){
       data[i,1] <- paste(date, time,sep = ' ')
     }
   }
-  return(data)
+
+  data
 }
 
 
@@ -362,8 +269,7 @@ matchingDays <- function(SGdata, otherCitydata){
   nonMatchingDays <- SGdata$timestamp[!SGdata$timestamp %in% otherCitydata$Date.Time]
 
   nonMatchingDays1 <- otherCitydata$Date.Time[!otherCitydata$Date.Time %in% SGdata$timestamp]
-  print(nonMatchingDays1)
-  print(nonMatchingDays)
+
   `%notin%` <- Negate(`%in%`)
 
   # negating that to find the matching days
@@ -380,7 +286,7 @@ matchingDays <- function(SGdata, otherCitydata){
   names(ourData)[3] <- "southGatePM"
   ourData$otherCityPM <- as.numeric(as.character(ourData$otherCityPM))
 
-  return(ourData)
+  ourData
 }
 
 
