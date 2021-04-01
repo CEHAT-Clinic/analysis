@@ -33,11 +33,11 @@ southgate_grid <- function() {
   long.range <- as.numeric(range(sg.city@bbox[1,]))
   lat.range <- as.numeric(range(sg.city@bbox[2,]))
 
-  test.grid <- expand.grid(x = seq(from = long.range[1], to = long.range[2], by = .005), y = seq(from = lat.range[1], to = lat.range[2], by = .005))
+  test.grid <- expand.grid(x = seq(from = long.range[1], to = long.range[2], by = .0005), y = seq(from = lat.range[1], to = lat.range[2], by = .0005))
 
   sg.grid <- sp::SpatialPoints(test.grid, proj4string = CRS(proj4string(sg.city)))
 
-  sg.grid <- sp::SpatialPixels(sg.grid[sg.city,])
+  sg.grid <- sp::SpatialPixelsDataFrame(sg.grid[sg.city,])
 
   sg.grid
 }
