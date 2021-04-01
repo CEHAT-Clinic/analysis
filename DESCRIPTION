@@ -10,9 +10,12 @@ Description: What the package does (one paragraph).
 License: use_mit_license()
 Imports:
   dplyr (>= 1.0.2),
+  ggplot2,
   lubridate (>= 1.7.9.2),
+  plyr,
   sf,
   sp (>= 1.4-2),
+  tibble,
   tidyverse,
   tigris
 Encoding: UTF-8
