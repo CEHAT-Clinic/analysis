@@ -13,8 +13,10 @@
 cleanPA <- function(data){
   time_clean = lubridate::ymd_hms(data$timestamp, tz="America/Los_Angeles")
 
+
   data$timestamp <- time_clean
   data <- data[order(data$timestamp),]
+
   data[,5] <- round(data[,5],5)
   data[,6] <- round(data[,6],4)
 
@@ -35,7 +37,6 @@ cleanPA <- function(data){
 
   data
 }
-
 
 #' Aggregate Data by Hour
 #'
@@ -121,6 +122,8 @@ hourlyPA <- function(data){
 
 
 
+
+
 #' Hourly Summary Data for South Gate
 #'
 #' This function aggregates data (output from the hourlyPA/cleanPA function) by hour for mean, median, max, min, and count of sensors
@@ -157,10 +160,6 @@ summarySG <- function(data) {
   avgSG
 
 }
-
-
-
-
 
 
 #' Collect Highs and Lows for PM2.5 per day
@@ -208,9 +207,107 @@ highslows <- function(data) {
 }
 
 
+#' This function takes in data, specifically the name of a csv file with
+#' timestamps, ChannelA, ChannelB, humidity, latitude and longitude
+#' It then cleans the data frame and returns AQI values.
+#' @param data, specifically the name of a csv file
+#' @return it returns a dataframe with hourly time, AQI, humidity, latitude and longitude
+#' @export
+#'
+
+AQIdataframe <- function(data){
+
+  myData <- cleanPA(data)
+  myAQIValues <- lapply(myData[2],aqiFromPm25)
+  myAQIData <- data.frame(myData$datehour, myAQIValues, myData$humidity,
+                          myData$latitude, myData$longitude)
+  colnames(myAQIData) <- c("datehour","AQI","humidity","latitude","longitude")
+
+  myAQIData
+}
 
 
 
+
+
+#' This function takes in data, specifically the name of a read csv file with
+#' timestamps, PM2.5, humidity, latitude and longitude
+#' It then cleans the changes the timestamps so that they match the
+#' timstamps of the purple air data.
+#' @param data, specifically the name of a csv file
+#' @return it returns a dataframe with hourly time (in the format of Ymd hms),
+#' PM2.5, humidity, latitude and longitude
+#' @export
+
+cleanAQMD <- function(data){
+  # converting aqmd csv to usable data frame
+  data <- as.data.frame(data)
+  data <- data[-c(1,2),-c(5)]
+  names(data)[1] <- 'Date.Time'
+  names(data)[2] <- 'Value'
+  names(data)[3] <- 'Unit'
+  names(data)[4] <- 'Averaging.Hour'
+
+
+  data <- dplyr::filter(data, Value != "--")
+  for (i in (1:length(data$Date.Time))){
+
+    date1 <- data[i,1]
+
+    if(substr(date1,10,10) == ' '){
+      date <- substr(date1,1,10)
+      date <- format(strptime(date, "%m/%d/%Y"), format="%Y-%m-%d")
+      time <- substring(date1, 11,last = 1000000L)
+      time <- format(strptime(time, "%I:%M:%S %p"), format="%H:%M:%S")
+      data[i,1] <- paste(date, time,sep = ' ')
+    }
+    else {
+      date <- substr(date1,1,11)
+      date <- format(strptime(date, "%m/%d/%Y"), format="%Y-%m-%d")
+      time <- substring(date1, 12,last = 1000000L)
+      time <- format(strptime(time, "%I:%M:%S %p"), format="%H:%M:%S")
+      data[i,1] <- paste(date, time,sep = ' ')
+    }
+  }
+
+  data
+}
+
+
+
+
+#' This function takes in cleaned purple air data, a dataframe with
+#' timestamps, PM2.5, humidity, latitude and longitude, and a AQMD csv files.
+#' It then combines these two files to make a dataframe with matching days.
+#' @param SGdata and otherCitydata, two csv files
+#' @return it returns a dataframe with matching days
+#' @export
+
+matchingDays <- function(SGdata, otherCitydata){
+  otherCitydata <- cleanAQMD(otherCitydata)
+  # finding all the non matching days among the two data frames
+  nonMatchingDays <- SGdata$timestamp[!SGdata$timestamp %in% otherCitydata$Date.Time]
+
+  nonMatchingDays1 <- otherCitydata$Date.Time[!otherCitydata$Date.Time %in% SGdata$timestamp]
+
+  `%notin%` <- Negate(`%in%`)
+
+  # negating that to find the matching days
+
+  Matching1 <- dplyr::filter(otherCitydata, Date.Time %notin% nonMatchingDays1)
+  Matching2 <- dplyr::filter(SGdata, timestamp %notin% nonMatchingDays)
+
+  #making the data frame with the PM2.5 values
+  Matching1$PM2.5<- round(Matching2$PM2.5,0)
+
+  ourData <- Matching1[-c(3,4)]
+  names(ourData)[1] <- "timestamp"
+  names(ourData)[2] <- "otherCityPM"
+  names(ourData)[3] <- "southGatePM"
+  ourData$otherCityPM <- as.numeric(as.character(ourData$otherCityPM))
+
+  ourData
+}
 
 
 #' Down Sensors?
