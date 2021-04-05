@@ -9,6 +9,7 @@ Authors@R:
 Description: What the package does (one paragraph).
 License: use_mit_license()
 Imports:
+  automap,
   dplyr (>= 1.0.2),
   ggplot2,
   lubridate (>= 1.7.9.2),
