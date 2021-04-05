@@ -6,22 +6,21 @@
 #' @export
 
 ttests<- function(otherCityData,SGdata,cityName){
-  
+
   ttest = stats::t.test(otherCityData,SGdata)
-  
+
   # null hypothesis: there is no significant difference between
   # the two data sets
   # check if the difference is statistically different
-  
-  paste("The p value is ", ttest$p.value,". This means that",sep="")
-  
+
   if (ttest$p.value < (.05) && ttest$statistic > 0) {
-    print(paste("the",cityName,"data is statistically worse than the South Gate data.",sep=" "))
+    result <- paste("the",cityName,"data is statistically worse than the South Gate data.",sep=" ")
   }
   if (ttest$p.value < (.05) && ttest$statistic < 0) {
-    print(paste("the South Gate data is statistically worse than the",cityName, "data.",sep = " "))
+    result <- paste("the South Gate data is statistically worse than the",cityName, "data.",sep = " ")
   }
   if (ttest$p.value >= (.05)){
-    print("the difference in the data is not statistically significant.")
+    result <- paste("the difference in the data is not statistically significant.")
   }
+  paste("The p value is ", ttest$p.value,". This means that", result, sep="")
 }
