@@ -231,11 +231,11 @@ AQIdataframe <- function(data){
 cleanAQMD <- function(data){
   # converting aqmd csv to usable data frame
   data <- as.data.frame(data)
+
   data <- data[-c(1,2),-c(5)]
   names(data)[1] <- 'Date.Time'
   names(data)[2] <- 'Value'
-  names(data)[3] <- 'Unit'
-  names(data)[4] <- 'Averaging.Hour'
+  data <- subset(data, select = -c(3,4))
 
 
   data <- dplyr::filter(data, Value != "--")
@@ -275,6 +275,8 @@ cleanAQMD <- function(data){
 matchingDays <- function(SGdata, otherCitydata){
   otherCitydata <- cleanAQMD(otherCitydata)
   # finding all the non matching days among the two data frames
+  SGdata$timestamp <- strftime(SGdata$timestamp)
+
   nonMatchingDays <- SGdata$timestamp[!SGdata$timestamp %in% otherCitydata$Date.Time]
 
   nonMatchingDays1 <- otherCitydata$Date.Time[!otherCitydata$Date.Time %in% SGdata$timestamp]
@@ -299,6 +301,26 @@ matchingDays <- function(SGdata, otherCitydata){
 }
 
 
+#' This function takes in a data frame of values with columns timestamp,
+#' otherCityPM, southGatePM, and PM2.5. It also takes in the name of the city
+#' returns the results after conducting t-tests on them
+#' @param two arrays of data with matching days and the name of the non-South Gate city
+#' @return it returns the t test results of the data sets
+#' @export
+
+compareDataDF <- function(ourData,nameOfCity){
+daysOfMonth <- aggregate(cbind(otherCityPM, southGatePM) ~ lubridate::mday(timestamp),
+                         data = ourData,
+                         FUN=mean)
+names(daysOfMonth)[1] <- "day"
+
+df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),
+                  city = c(rep(nameOfCity, times = length(daysOfMonth$timestamp)),
+                           rep("South Gate",times = length(daysOfMonth$timestamp))),
+                  PM2.5 = c(daysOfMonth[,"otherCityPM"],daysOfMonth[,"southGatePM"]))
+
+df2
+}
 #' Down Sensors?
 #'
 #' This reports which sensors were down and on which days that they went

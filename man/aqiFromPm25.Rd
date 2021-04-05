@@ -7,6 +7,9 @@ It then calculates the AQI given that specified value.}
 \usage{
 aqiFromPm25(pm25Concentration)
 }
+\arguments{
+\item{pm25Concentration}{that you want to know the AQI for}
+}
 \value{
 it returns the AQI that corresponds to the given PM2.5 measurement
 }

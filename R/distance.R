@@ -1,6 +1,6 @@
 #' This function takes in one parameter:degrees.
 #'  It then calculates the radian of that specified value.
-#' @param degrees
+#' @param degrees that you want to convert to radian
 #' @return it returns the radian value of that degree value
 #' @export
 

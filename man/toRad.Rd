@@ -7,6 +7,9 @@ It then calculates the radian of that specified value.}
 \usage{
 toRad(degrees)
 }
+\arguments{
+\item{degrees}{that you want to convert to radian}
+}
 \value{
 it returns the radian value of that degree value
 }

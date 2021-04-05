@@ -23,7 +23,7 @@ indexCalculation <-function(highIndexBreakpoint,lowIndexBreakpoint,
 
 #' This function takes in one parameters:pm25Concentration.
 #'  It then calculates the AQI given that specified value.
-#' @param pm25Concentration
+#' @param pm25Concentration that you want to know the AQI for
 #' @return it returns the AQI that corresponds to the given PM2.5 measurement
 #' @export
 
