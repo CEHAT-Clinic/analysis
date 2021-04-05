@@ -299,12 +299,12 @@ matchingDays <- function(SGdata, otherCitydata){
   Matching1 <- dplyr::filter(otherCitydata, Date.Time %notin% nonMatchingDays1)
   Matching2 <- dplyr::filter(SGdata, timestamp %notin% nonMatchingDays)
 
+  Matching1 <- Matching1[,-c(3,4)]
   #making the data frame with the PM2.5 values
-  Matching1$PM2.5<- round(Matching2$average_PM2.5,0)
+  Matching1$southGatePM<- round(Matching2$average_PM2.5,0)
 
   names(Matching1)[1] <- "timestamp"
   names(Matching1)[2] <- "otherCityPM"
-  names(Matching1)[3] <- "southGatePM"
   Matching1$otherCityPM <- as.numeric(as.character(Matching1$otherCityPM))
 
   Matching1
