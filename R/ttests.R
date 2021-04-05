@@ -22,5 +22,5 @@ ttests<- function(otherCityData,SGdata,cityName){
   if (ttest$p.value >= (.05)){
     result <- paste("the difference in the data is not statistically significant.")
   }
-  paste("The p value is ", ttest$p.value,". This means that", result, sep="")
+  paste("The p value is ", ttest$p.value,". This means that ", result, sep="")
 }
