@@ -2,7 +2,7 @@
 % Please edit documentation in R/gettingCityName.R
 \name{gettingCityName}
 \alias{gettingCityName}
-\title{This function takes in a csv file from AQMD and returns the
+\title{This function takes in a read csv file from AQMD and returns the
 name of the city that the data is about}
 \usage{
 gettingCityName(data)
@@ -14,6 +14,6 @@ gettingCityName(data)
 it returns the name that the data set is about.
 }
 \description{
-This function takes in a csv file from AQMD and returns the
+This function takes in a read csv file from AQMD and returns the
 name of the city that the data is about
 }
