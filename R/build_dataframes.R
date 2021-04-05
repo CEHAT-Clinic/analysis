@@ -325,8 +325,8 @@ daysOfMonth <- aggregate(cbind(otherCityPM, southGatePM) ~ lubridate::mday(times
 names(daysOfMonth)[1] <- "day"
 
 df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),
-                  city = c(rep(nameOfCity, times = length(daysOfMonth$timestamp)),
-                           rep("South Gate",times = length(daysOfMonth$timestamp))),
+                  city = c(rep(nameOfCity, times = length(daysOfMonth$day)),
+                           rep("South Gate",times = length(daysOfMonth$day))),
                   PM2.5 = c(daysOfMonth[,"otherCityPM"],daysOfMonth[,"southGatePM"]))
 
 df2
