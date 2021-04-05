@@ -300,7 +300,7 @@ matchingDays <- function(SGdata, otherCitydata){
   Matching2 <- dplyr::filter(SGdata, timestamp %notin% nonMatchingDays)
 
   #making the data frame with the PM2.5 values
-  Matching1$PM2.5<- round(Matching2$PM2.5,0)
+  Matching1$PM2.5<- round(Matching2$averange_PM2.5,0)
 
   names(Matching1)[1] <- "timestamp"
   names(Matching1)[2] <- "otherCityPM"
