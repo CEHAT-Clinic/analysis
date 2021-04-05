@@ -53,17 +53,17 @@ hourlyPA <- function(data){
   #-------------------------------------------------------------------------------------#
   sensors <- unique(data[,c('longitude','latitude')])
   sensors <- dplyr::mutate(sensors,
-                    names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-                                      longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-                                      longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-                                      longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-                                      longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-                                      longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-                                      longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-                                      longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-                                      longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-                                      longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-                                      longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
   )
 
   sensorNum <- nrow(sensors)
@@ -98,13 +98,24 @@ hourlyPA <- function(data){
 
   #map the time of day to corresponding timestamps
   PAhourly <- dplyr::mutate(PAhourly,
-                     timeofday = dplyr::case_when(hour >= 0 & hour <= 5 ~ "night",
-                                           hour >= 6 & hour <= 11 ~ "morning",
-                                           hour >= 12 & hour <= 17 ~ "afternoon",
-                                           hour >= 18 & hour <= 23 ~ "evening" )
+                            timeofday = dplyr::case_when(hour >= 0 & hour <= 5 ~ "night",
+                                                         hour >= 6 & hour <= 11 ~ "morning",
+                                                         hour >= 12 & hour <= 17 ~ "afternoon",
+                                                         hour >= 18 & hour <= 23 ~ "evening" )
   )
 
   PAhourly <- dplyr::left_join(PAhourly, sensors, by = c("latitude","longitude"), keep= F)
+
+  PAhourly <- dplyr::mutate(PAhourly,
+                            category = dplyr::case_when(PM2.5 >= 0 & PM2.5 <=12 ~ "Good",
+                                                        PM2.5 >= 12.01 & PM2.5 <=35.4 ~ "Moderate",
+                                                        PM2.5 >= 35.41 & PM2.5 <= 55.4 ~ "Unhealthy for Sensitive Groups",
+                                                        PM2.5 >= 55.41 & PM2.5 <= 150.4 ~ "Unhealthy",
+                                                        PM2.5 >= 150.41 & PM2.5 <= 250.4 ~ "Very Unhealthy",
+                                                        PM2.5 >= 250.41 & PM2.5 <= 500 ~ "Hazardous",
+                                                        PM2.5 >= 500.01 ~ "Hazardous+")
+  )
+
 
   PAhourly
 }
@@ -126,7 +137,7 @@ summarySG <- function(data) {
 
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
 
-  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp))
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp)) #uses the "timestamp" column
 
   avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
                      data = data[lubridate::month(data$timestamp) >1,],
@@ -321,10 +332,184 @@ df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),
 
 df2
 }
+
 #' Down Sensors?
+#'
+#' This reports which sensors were down and on which days that they went down. This
+#'
+#' @param data a dataframe of hourly PurpleAir sensor data from the CEHAT website
+#' @return a list object including the logical dataframe showing when sensors went down and the corresponding numerical representation of this, which counts the days
+#' @export
+
+downSensors <- function(data){
+  #---------------------------------------------------#
+  sensors <- unique(data[,c('longitude','latitude')])
+  sensors <- dplyr::mutate(sensors,
+                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+  )
+
+  sensorNum <- nrow(sensors)
+
+  totalDays <- unique(cut(data$timestamp, breaks="day"))
+
+  numDays <- length(totalDays)
+  #---------------------------------------------------#
+
+  downSensors <- data.frame(matrix(ncol = sensorNum+1, nrow = length(totalDays) ))
+
+  downSensors[,1] <- totalDays
+
+  #was sensor i down on day k? (FALSE if yes, TRUE if no)
+  for(i in 1:sensorNum){
+    names(downSensors)[i+1] <- sensors$names[i]
+    q <- c()
+    for(k in 1:31){
+      if (sensors$names[i] %in% data$names[data$day==k]){
+        q <- c(q,TRUE)
+      }
+      else{
+        q <- c(q,FALSE)
+      } }
+    downSensors[,i+1] <- q
+  }
+  names(downSensors)[1] <- "Date"
+
+
+  #numerical representation
+  offDays <- as.data.frame(apply(downSensors[,-1], 2, sum))
+  offDays <- tibble::rownames_to_column(offDays, "names")
+  names(offDays)[2] <- "numDownDays"
+  offDays$numDownDays <- (as.vector(rep(length(totalDays),times=sensorNum)) - offDays$numDownDays)
+
+
+  output <- list(downSensors,offDays)
+
+  output
+}
+
+
+
+
+#' Above/Below Median
 #'
 #' This reports which sensors were down and on which days that they went
 #'
-#' @param data a dataframe of hourly PurpleAir sensor data from the CEHAT website
-#' @return a dataframe of the highs and lows of PurpleAir sensor data, organized by sensor
+#' @param data output of the hourlyPA function (a dataframe of hourly PurpleAir sensor data)
+#' @param type a single-character string indicating whether values above or below the median should be returned
+#' @return a dataframe that details how many readings are above/below the median for each sensor, along with that sensors total readings
 #' @export
+
+compareSensors <- function(data, type = c('a', 'b')){
+  #-------------------------------------------------------------------------------------#
+  sensors <- unique(data[,c('longitude','latitude')])
+  sensors <- dplyr::mutate(sensors,
+                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+  )
+  #-------------------------------------------------------------------------------------#
+
+  num_readings <- aggregate(PM2.5 ~ names, data, FUN=length )
+  colnames(num_readings) <- c('names', 'total_readings')
+
+  #the percent breaks
+  bks <- c(0,15,30,50,70,100, 200, 300, 500, Inf)
+  end <- length(bks)
+
+  #initialize the data frame
+  pct_diffs <- as.data.frame(sensors$names)
+  names(pct_diffs) <- "names"
+
+
+  #change less than or equal to back to just less than once you check the thing
+  if (type == "a"){
+    readings_over <- aggregate(PM2.5 ~ names,
+                               data = data[data$PM2.5> data$median_PM2.5,], FUN=length )
+    colnames(readings_over) <- c("names", "count")
+
+    #add longitude and latitude, for mapping
+    readings_over <- dplyr::left_join(readings_over, sensors, by= "names")
+    #add the total number of readings
+    readings_over <- dplyr::left_join(readings_over, num_readings, by= "names")
+
+    #create the pct difference values on which to separate by
+    readings <- dplyr::filter(data, PM2.5> median_PM2.5)
+    readings$pct_over <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
+
+    pct_names <- c("below_15%", "below_30%", "below_50%", "below_70%", "below_100%", "below_200%", "below_300%", "below_500%", "above_500%")
+
+    x<-1
+    #counting each instance of readings under the median by percentage bin
+    while (!plyr::empty(readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],])){
+      u <- aggregate(PM2.5 ~ names,
+                     data = readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],], FUN = length)
+
+      pct_diffs <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
+      names(pct_diffs)[x+1] <- pct_names[x]
+      x <- x+1
+    }
+
+    #aggregate doesn't count nonpresent sensors, so replace the NA values with 0's
+    pct_diffs[is.na(pct_diffs)] <- 0
+
+    readings_over <- dplyr::left_join(readings_over, pct_diffs, by = "names", keep=F)
+
+    readings_over
+  }
+  else{
+    readings_under <- aggregate(PM2.5 ~ names,
+                               data = data[data$PM2.5< data$median_PM2.5,], FUN=length )
+    colnames(readings_under) <- c("names", "count")
+
+    #add longitude and latitude, for mapping
+    readings_under <- dplyr::left_join(readings_under, sensors, by= "names")
+    #add the total number of readings
+    readings_under <- dplyr::left_join(readings_under, num_readings, by= "names")
+
+    #create the pct difference values on which to separate by
+    readings <- dplyr::filter(data, PM2.5< median_PM2.5)
+    readings$pct_under <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
+
+    pct_names <- c("below_15%", "below_30%", "below_50%", "below_70%", "below_100%", "below_200%", "below_300%", "below_500%", "above_500%")
+
+
+    x<-1
+    #counting each instance of readings under the median by percentage bin
+    while (!plyr::empty(readings[readings$pct_under>=bks[x] & readings$pct_under<=bks[x+1],])){
+      u <- aggregate(PM2.5 ~ names,
+                     data = readings[readings$pct_under>=bks[x] & readings$pct_under<=bks[x+1],], FUN = length)
+
+      pct_diffs <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
+      names(pct_diffs)[x+1] <- pct_names[x]
+      x <- x+1
+    }
+
+    #aggregate doesn't count nonpresent sensors, so replace the NA values with 0's
+    pct_diffs[is.na(pct_diffs)] <- 0
+
+    readings_under <- dplyr::left_join(readings_under, pct_diffs, by = "names", keep=F)
+
+    readings_under
+  }
+
+}
+
+

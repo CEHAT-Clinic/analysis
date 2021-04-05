@@ -4,7 +4,12 @@ export(AQIdataframe)
 export(aqiFromPm25)
 export(cleanAQMD)
 export(cleanPA)
+<<<<<<< HEAD
 export(compareDataDF)
+=======
+export(compareSensors)
+export(downSensors)
+>>>>>>> 65020d26f7f1eaed750b9b0e05b9a8bacf842ae8
 export(distance)
 export(gettingCityName)
 export(highslows)

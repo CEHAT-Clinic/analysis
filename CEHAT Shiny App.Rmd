@@ -1,3 +1,4 @@
+
 ---
 title: "CEHAT Air Quality App"
 output: html_document
@@ -6,63 +7,51 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 suppressPackageStartupMessages({
 library(dplyr)
 library(plotly)
 library(tidyverse)
 devtools::install_github("CEHAT-Clinic/analysis")
 library(PurpleAirCEHAT)})
-
 ```
 
-This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
 
-To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
 
-## Inputs and Outputs
-
-You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
+## Highs and Lows
 
 EXAMPLE
 
 ```{r eruptions, echo=FALSE}
-inputPanel(
-  selectInput("n_breaks", label = "Number of bins:",
-              choices = c(10, 20, 35, 50), selected = 20),
+#inputPanel(
+ # selectInput("n_breaks", label = "Number of bins:",
+  #            choices = c(10, 20, 35, 50), selected = 20),
   
-  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-              min = 0.2, max = 2, value = 1, step = 0.2)
-)
-
-renderPlot({
-  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
-       xlab = "Duration (minutes)", main = "Geyser eruption duration")
+#  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+ #             min = 0.2, max = 2, value = 1, step = 0.2)
+#)
+#This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
+#To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
+#renderPlot({
+ # hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
+  #     xlab = "Duration (minutes)", main = "Geyser eruption duration")
   
-  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
-  lines(dens, col = "blue")
-})
+  #dens <- density(faithful$eruptions, adjust = input$bw_adjust)
+  #lines(dens, col = "blue")
+#})
 ```
 
 
 
-```{r highlow,echo=FALSE}
-
+```{r highlow, echo=FALSE}
 PAfull <- read.csv("december2020_readings.csv")
-
 PAfull <- PurpleAirCEHAT::cleanPA(PAfull)
-
 PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull)
-
 PAhi_lo <- PurpleAirCEHAT::highslows(PAhourly)
-
 sensors <- unique(PAfull[,c(5,4)])
 #adding the names of 11 sensors
 #to add another sensor, end the previous line with a comma, and input the following info for the new sensor:
 #     longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
 #     longitude == <longitude> & latitude == <latitude> ~ "<name>")
-
-
 sensors <- mutate(sensors,
                   names = case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
                                     longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
@@ -76,20 +65,14 @@ sensors <- mutate(sensors,
                                     longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
                                     longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
 )
-
 wessy_pal <- c("high"="#C93312","low"="#899DA4")
-
-
 inputPanel(
   selectInput("sensor", label = "View sensor:",
               choices = sensors$names, selected = "Sensor: SCSG-14"),
   
   selectInput("n_breaks", label = "Number of bins:",
-              choices = c(10, 20, 35, 50), selected = 20)
+              choices = c(4, 8, 16, 24), selected = 8)
 )
-
-
-
 renderPlotly({
   hilo <- ggplot(data=PAhi_lo[PAhi_lo$names == input$sensor,], aes(x=day, y=PM2.5, group = day)) +
         geom_line(lwd=1)+
@@ -105,36 +88,37 @@ renderPlotly({
   
   ggplotly(hilo)
 })
-
 renderPlot({
-  hist(PAhi_lo$PM2.5[PAhi_lo$names==input$sensor], probability = TRUE, breaks = as.numeric(input$n_breaks),
-       xlab = "PM2.5 Value (µg/m³)", main = "High and Low Histogram")
-
+  hist(PAhi_lo$PM2.5[PAhi_lo$names==input$sensor & PAhi_lo$type == "high"], probability = TRUE, breaks = as.numeric(input$n_breaks),
+       xlab = "PM2.5 Value (µg/m³)", main = "Histogram of High Values")
 })
-
 ```
 
 
 
-```{r density,echo=FALSE}
-
-
-
-renderPlot({print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=hour, group = timeofday))+
-        geom_histogram(aes(y=after_stat(count/nrow(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,])), color=timeofday, fill=timeofday),  alpha=0.7, stat="count", bins=4, lwd=1)+
+```{r density, echo=FALSE}
+inputPanel(
+  selectInput("month", label = "Choose month(s):",
+              choices = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "November", "December"), selected = "December")
+)
+renderPlotly({
+  dens <- ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300 & months(PAhi_lo$timestamp) == input$month,], aes(x=hour, group = timeofday))+
+        geom_histogram(aes(y=after_stat(count/nrow(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,])),                color=timeofday, fill=timeofday),  alpha=0.7, stat="count", bins=4, lwd=1)+
         #geom_point(aes(, ycolor=timeofday, alpha=0.01))+
-        geom_density(alpha = 0.1, fill = "grey")+
+        geom_density(alpha = 0.2, fill = "grey")+
         labs(x = "Hour", y = "Density") +
         ggtitle("Density of Peak PM2.5 Values Over 24-hour Period")+
         scale_color_brewer(palette="Dark2")+
         scale_fill_brewer(palette="Dark2")+
         theme_minimal()
-)
+  ggplotly(dens)
 })
-
-
 ```
 
+
+
+```{r overEPA}
+```
 
 
 
@@ -143,21 +127,22 @@ renderPlot({print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], 
 
 #cleaned PM2.5 data
 
-#SGData <- subset(PAhourly, select = -c(6,7,8,9,10))
+SGData <- subset(PAhourly, select = -c(6,7,8,9,10))
 
 # removing timezone
 
 
-Sensor1 <- PAhourly[PAhourly$names == input$sensor,]
+#Sensor1 <- PAhourly[PAhourly$names == input$sensor,]
 
 # removing timezone
-Sensor1$timestamp <- strftime(Sensor1$timestamp)
-#Sensor1 <- dplyr::filter(SGData, latitude == '33.95094')
+
+Sensor1 <- dplyr::filter(SGData, latitude == '33.95094')
 #Sensor2 <- dplyr::filter(SGData, latitude == '33.96063')
 #Sensor3 <- dplyr::filter(SGData, latitude == '33.96757')
 #Sensor4 <- dplyr::filter(SGData, latitude == '33.96192')
 #Sensor5 <- dplyr::filter(SGData, latitude == '33.92019')
 
+Sensor1$timestamp <- strftime(Sensor1$timestamp)
 # ************ compare the South Gate data to the AQMD data *************
 
 otherCityData <- read.csv("indio_readings.csv")
@@ -167,30 +152,26 @@ for (i in (1:100)){
     if(substr(otherCityData[1,1],i,i) != '_'){end_index <- i}
     else {break}}
 
-nameOfCity <- substr(otherCityData[1,1],1,end_index)
+nameOfCity <- PurpleAirCEHAT::gettingCityName(otherCityData)
 
 # --- making a data frame with matching dates (for Sensor1)
 
 ourData <- PurpleAirCEHAT::matchingDays(Sensor1, otherCityData)
-# ourData$days <- lubridate::mday(ourData$timestamp)
+
 
 
 # ----- visualizations for comparing the data ------
 
 # divides the times in day intervals
 
-daysOfMonth <- aggregate(cbind(otherCityPM, southGatePM) ~ lubridate::mday(timestamp), 
-           data = ourData, 
-           FUN=mean)
-names(daysOfMonth)[1] <- "day"
-
-df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),city = c(rep(nameOfCity, times = 31),rep("South Gate",times = 31)),PM2.5 = c(daysOfMonth[,"otherCityPM"],daysOfMonth[,"southGatePM"]))
+df2 <- PurpleAirCEHAT::compareDataDF(ourData, nameOfCity,nameOfCity)
 
 # - boxplot
 
 renderPlotly({
-  boxplot <- ggplot(df2, aes(x= city, y=PM2.5))+                     geom_boxplot(outlier.colour="red", outlier.size = 8, fill                 =c("darkolivegreen3","darksalmon"),notch=T) +
-   ggtitle(paste("PM2.5 in",nameOfCity,"vs South                             Gate",sep=" "))
+  boxplot <- ggplot(df2, aes(x= city, y=PM2.5))+
+    geom_boxplot(outlier.colour="red", outlier.size = 8, fill                         =c("darkolivegreen3","darksalmon"),notch=T) +
+   ggtitle(paste("PM2.5 in",nameOfCity,"vs South Gate",sep=" "))
    
    ggplotly(boxplot)
 })
@@ -207,30 +188,10 @@ renderPlotly({
 
 # comparing the data using t-tests
 
-ttest = stats::t.test(ourData$otherCityPM,ourData$southGatePM)
-
-# null hypothesis: there is no significant difference between
-# the two data sets
-# check if the difference is statistically different
-
-if (ttest$p.value < (.05) && ttest$statistic > 0) {
-  print(paste("The",nameOfCity,"data is statistically worse than the South Gate data.",sep=" "))
-}
-if (ttest$p.value < (.05) && ttest$statistic < 0) {
-  print(paste("The South Gate data is statistically worse than the",nameOfCity, "data.",sep = " "))
-}
-if (ttest$p.value >= (.05)){
-  print("We can not reject the null hypothesis")
-}
-```
-
-```{r overEPAthreshold, echo=FALSE}
-
+ttest = PurpleAirCEHAT::ttests(ourData$otherCityPM,ourData$southGatePM)
 
 
 ```
-
-
 
 
 
