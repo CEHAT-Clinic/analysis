@@ -302,12 +302,12 @@ matchingDays <- function(SGdata, otherCitydata){
   #making the data frame with the PM2.5 values
   Matching1$PM2.5<- round(Matching2$PM2.5,0)
 
-  names(ourData)[1] <- "timestamp"
-  names(ourData)[2] <- "otherCityPM"
-  names(ourData)[3] <- "southGatePM"
-  ourData$otherCityPM <- as.numeric(as.character(ourData$otherCityPM))
+  names(Matching1)[1] <- "timestamp"
+  names(Matching1)[2] <- "otherCityPM"
+  names(Matching1)[3] <- "southGatePM"
+  Matching1$otherCityPM <- as.numeric(as.character(Matching1$otherCityPM))
 
-  ourData
+  Matching1
 }
 
 
