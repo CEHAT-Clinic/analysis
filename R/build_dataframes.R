@@ -343,7 +343,7 @@ overEPA <- function(ourData){
   rolling <- data.frame(rollingmean = rollmean(ourData$PM2.5, 24))
   rolling[nrow(rolling)+ (length(ourData$PM2.5) - length(rolling$rollingmean)),] <- NA
   Sensor <- dplyr::bind_cols(ourData, rolling)
-  daysOver <- dplyr::filter(Sensor, rollingmean >= 35)
+  daysOver <- dplyr::filter(Sensor, rollingmean >= 25)
 
   daysOver
 }
