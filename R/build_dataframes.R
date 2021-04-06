@@ -345,7 +345,65 @@ overEPA <- function(ourData){
   Sensor <- dplyr::bind_cols(ourData, rolling)
   daysOver <- dplyr::filter(Sensor, rollingmean >= 35)
 
+  list <- c()
+
+  for (day in (1:31)){
+    freq <- 0
+    for (hour in (1:length(daysOver$timestamp))){
+
+        if(daysOver$day[hour] == day){
+          freq <- freq + 1
+          dayF <- day
+         }
+         }
+
+    list <- c(list,freq)
+    }
+
+  df
   daysOver
+}
+
+overEPA_hist <- function(daysOver){
+
+  list <- c()
+  days <- c()
+  for (day in (1:31)){
+    freq <- 0
+
+    for (hour in (1:length(daysOver$timestamp))){
+      dayF <- c()
+      if(daysOver$day[hour] == day){
+        freq <- freq + 1
+        dayF <- append(dayF,daysOver$hour)
+      }
+    }
+    list <- c(list,freq)
+    days <- append(days,dayF)
+  }
+
+  df <- data.frame(day = seq(1,31,by=1),
+                   freq = list)
+
+  total <- 0
+  df$days[1] <- list()
+  for (i in (1:length(list))) {
+    if (list[i] != 0) {
+    df$days[i] <- list(days[total+1:list[i]])
+    total <- total + list[i]
+  }
+  }
+
+  for (i in (1:length(list))) {
+    if (list[i] != 0) {df$days1[i] <- df$days[i]}
+    else{df$days1[i] <- 0}
+  }
+
+  df <- df[,-c(3)]
+  names(df)[3] <- "days"
+
+
+  df
 }
 
 #' Down Sensors?
