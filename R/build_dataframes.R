@@ -299,12 +299,12 @@ matchingDays <- function(SGdata, otherCitydata){
   Matching1 <- dplyr::filter(otherCitydata, Date.Time %notin% nonMatchingDays1)
   Matching2 <- dplyr::filter(SGdata, timestamp %notin% nonMatchingDays)
 
+  Matching1 <- Matching1[,-c(3,4)]
   #making the data frame with the PM2.5 values
-  Matching1$PM2.5<- round(Matching2$average_PM2.5,0)
+  Matching1$southGatePM<- round(Matching2$average_PM2.5,0)
 
   names(Matching1)[1] <- "timestamp"
   names(Matching1)[2] <- "otherCityPM"
-  names(Matching1)[3] <- "southGatePM"
   Matching1$otherCityPM <- as.numeric(as.character(Matching1$otherCityPM))
 
   Matching1
@@ -319,17 +319,74 @@ matchingDays <- function(SGdata, otherCitydata){
 #' @export
 
 compareDataDF <- function(ourData,nameOfCity){
-daysOfMonth <- aggregate(cbind(otherCityPM, southGatePM) ~ lubridate::mday(timestamp),
-                         data = ourData,
-                         FUN=mean)
-names(daysOfMonth)[1] <- "day"
+  daysOfMonth <- aggregate(cbind(otherCityPM, southGatePM) ~ lubridate::mday(timestamp),
+                           data = ourData,
+                           FUN=mean)
+  names(daysOfMonth)[1] <- "day"
 
-df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),
-                  city = c(rep(nameOfCity, times = length(daysOfMonth$day)),
-                           rep("South Gate",times = length(daysOfMonth$day))),
-                  PM2.5 = c(daysOfMonth[,"otherCityPM"],daysOfMonth[,"southGatePM"]))
+  df2 <- data.frame(day = c(daysOfMonth[,"day"], daysOfMonth[,"day"]),
+                    city = c(rep(nameOfCity, times = length(daysOfMonth$day)),
+                             rep("South Gate",times = length(daysOfMonth$day))),
+                    PM2.5 = c(daysOfMonth[,"otherCityPM"],daysOfMonth[,"southGatePM"]))
 
-df2
+  df2
+}
+
+#' This function takes in a data frame of values from one sensor and returns a dataframe
+#' of the days where the PM2.5 values surpass the EPA threshold.
+#' @param a dataframe of values from one sensor and the name of the PM2.5 category
+#' @return a dataframe of the days where the PM2.5 values surpass the EPA threshold.
+#' @export
+#'
+overEPA <- function(ourData){
+
+  rolling <- data.frame(rollingmean = rollmean(ourData$PM2.5, 24))
+  rolling[nrow(rolling)+ (length(ourData$PM2.5) - length(rolling$rollingmean)),] <- NA
+  Sensor <- dplyr::bind_cols(ourData, rolling)
+  daysOver <- dplyr::filter(Sensor, rollingmean >= 25)
+
+  daysOver
+}
+
+#' This function takes in a data frame of values that is cleaned by overEPA and
+#' returns a dataframe that fits in the histogram function
+#' @param a dataframe of values from one sensor after being cleaned by overEPA
+#' @return a dataframe that fits in the histogram function
+#' @export
+#'
+overEPA_hist <- function(daysOver){
+
+  list <- c()
+  days <- c()
+  for (day in (1:31)){
+    freq <- 0
+    for (hour in (1:length(daysOver$timestamp))){
+      dayF <- c()
+      if(daysOver$day[hour] == day){
+        freq <- freq + 1
+        dayF <- append(dayF,daysOver$hour)}}
+    list <- c(list,freq)
+    days <- append(days,dayF)}
+
+  df <- data.frame(day = seq(1,31,by=1),
+                   freq = list)
+
+  total <- 0
+  df$days[1] <- list()
+  for (i in (1:length(list))) {
+    if (list[i] != 0) {
+    df$days[i] <- list(days[total+1:list[i]])
+    total <- total + list[i]}
+  }
+
+  for (i in (1:length(list))) {
+    if (list[i] != 0) {df$days1[i] <- df$days[i]}
+    else{df$days1[i] <- 0}}
+
+  df <- df[,-c(3)]
+  names(df)[3] <- "days"
+
+  df
 }
 
 #' Down Sensors?
