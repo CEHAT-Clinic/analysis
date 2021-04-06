@@ -345,22 +345,6 @@ overEPA <- function(ourData){
   Sensor <- dplyr::bind_cols(ourData, rolling)
   daysOver <- dplyr::filter(Sensor, rollingmean >= 35)
 
-  list <- c()
-
-  for (day in (1:31)){
-    freq <- 0
-    for (hour in (1:length(daysOver$timestamp))){
-
-        if(daysOver$day[hour] == day){
-          freq <- freq + 1
-          dayF <- day
-         }
-         }
-
-    list <- c(list,freq)
-    }
-
-  df
   daysOver
 }
 
