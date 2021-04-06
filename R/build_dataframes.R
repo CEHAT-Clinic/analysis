@@ -372,12 +372,11 @@ overEPA_hist <- function(daysOver){
                    freq = list)
 
   total <- 0
-  df$days[1] <- list()
+
   for (i in (1:length(list))) {
-    if (list[i] != 0) {
     df$days[i] <- list(days[total+1:list[i]])
     total <- total + list[i]}
-  }
+
 
   for (i in (1:length(list))) {
     if (list[i] != 0) {df$days1[i] <- df$days[i]}
