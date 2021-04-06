@@ -37,7 +37,7 @@ southgate_grid <- function() {
 
   sg.grid <- sp::SpatialPoints(test.grid, proj4string = CRS(proj4string(sg.city)))
 
-  sg.grid <- sp::SpatialPixelsDataFrame(sg.grid[sg.city,])
+  sg.grid <- sp::SpatialPixelsDataFrame(points= sg.grid[sg.city,], data = as.data.frame(sg.grid[sg.city,]@coords))
 
   sg.grid
 }
