@@ -338,10 +338,10 @@ compareDataDF <- function(ourData,nameOfCity){
 #' @return a dataframe of the days where the PM2.5 values surpass the EPA threshold.
 #' @export
 #'
-overEPA <- function(ourData,pm){
+overEPA <- function(ourData){
 
-  rolling <- data.frame(rollingmean = rollmean(ourData$pm, 24))
-  rolling[nrow(rolling)+ (length(ourData$pm) - length(rolling$rollingmean)),] <- NA
+  rolling <- data.frame(rollingmean = rollmean(ourData$PM2.5, 24))
+  rolling[nrow(rolling)+ (length(ourData$PM2.5) - length(rolling$rollingmean)),] <- NA
   Sensor <- dplyr::bind_cols(ourData, rolling)
   daysOver <- dplyr::filter(Sensor, rollingmean >= 25)
 
