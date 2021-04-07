@@ -105,31 +105,14 @@ renderPlotly({
 
 
 #cleaned PM2.5 data
+avgSG <- PurpleAirCEHAT::summarySG(PAhourly)
 
-SGData <- subset(PAhourly, select = -c(6,7,8,9,10))
-
-# removing timezone
-
-
-#Sensor1 <- PAhourly[PAhourly$names == input$sensor,]
-
-# removing timezone
-
-Sensor1 <- dplyr::filter(SGData, latitude == '33.95094')
-#Sensor2 <- dplyr::filter(SGData, latitude == '33.96063')
-#Sensor3 <- dplyr::filter(SGData, latitude == '33.96757')
-#Sensor4 <- dplyr::filter(SGData, latitude == '33.96192')
-#Sensor5 <- dplyr::filter(SGData, latitude == '33.92019')
-
-Sensor1$timestamp <- strftime(Sensor1$timestamp)
+avgSG$timestamp <- strftime(avgSG$timestamp)
 # ************ compare the South Gate data to the AQMD data *************
 
 otherCityData <- read.csv("indio_readings.csv")
 
 # getting the name of the city
-for (i in (1:100)){
-    if(substr(otherCityData[1,1],i,i) != '_'){end_index <- i}
-    else {break}}
 
 nameOfCity <- PurpleAirCEHAT::gettingCityName(otherCityData)
 
