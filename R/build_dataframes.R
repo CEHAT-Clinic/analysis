@@ -349,16 +349,20 @@ overEPA <- function(ourData){
 }
 
 #' This function takes in a data frame of values that is cleaned by overEPA and
-#' returns a dataframe that fits in the histogram function
+#' the number of days that we have sensor data for (not number of days that are over
+#' EPA threshold), and returns a dataframe that fits in the histogram function
 #' @param a dataframe of values from one sensor after being cleaned by overEPA
 #' @return a dataframe that fits in the histogram function
 #' @export
 #'
-overEPA_hist <- function(daysOver){
+overEPA_hist <- function(daysOver,numOfDays){
 
   list <- c()
   days <- c()
-  for (day in (1:31)){
+
+  numOfDays <- 31
+  # find the frequency of the days over the EPA threshold
+  for (day in (1:numOfDays)){
     freq <- 0
     for (hour in (1:length(daysOver$timestamp))){
       dayF <- c()
@@ -368,9 +372,10 @@ overEPA_hist <- function(daysOver){
     list <- c(list,freq)
     days <- append(days,dayF)}
 
-  df <- data.frame(day = seq(1,31,by=1),
+  df <- data.frame(day = seq(1,numOfDays,by=1),
                    freq = list)
 
+  # find what days correspond to those frequencies
   total <- 0
 
   for (i in (1:length(list))) {
@@ -382,6 +387,7 @@ overEPA_hist <- function(daysOver){
     if (list[i] != 0) {df$days1[i] <- df$days[i]}
     else{df$days1[i] <- 0}}
 
+  # make a dataframe corresponding to these values
   df <- df[,-c(3)]
   names(df)[3] <- "days"
 
