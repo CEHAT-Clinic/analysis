@@ -4,10 +4,11 @@
 \alias{hourlyPA}
 \title{Aggregate Data by Hour}
 \usage{
-hourlyPA(data)
+hourlyPA(data, new)
 }
 \arguments{
-\item{data}{a CLEANED dataframe of PurpleAir sensor data}
+\item{data}{a CLEANED dataframe of PurpleAir sensor data and a boolean specifying if we are using the new
+data (in which case you put TRUE) or the old data (in which cse you put FALSE)}
 }
 \value{
 a dataframe of the hourly PA sensor data, with sensor names, days of the week, hour, and time of day
