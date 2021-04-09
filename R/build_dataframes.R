@@ -75,30 +75,37 @@ newCleanPA <- function(data){
 #' It also uses an EPA correction factor for PurpleAir sensors.
 #' Any readings with faulty channel A/B values will be dropped
 #'
-#' @param data a CLEANED dataframe of PurpleAir sensor data
+#' @param data a CLEANED dataframe of PurpleAir sensor data and a boolean specifying if we are using the new
+#' data (in which case you put TRUE) or the old data (in which cse you put FALSE)
 #' @return a dataframe of the hourly PA sensor data, with sensor names, days of the week, hour, and time of day
 #' @export
 
-hourlyPA <- function(data){
+hourlyPA <- function(data,new){
+  if (new == FALSE){
   #-------------------------------------------------------------------------------------#
-  # sensors <- unique(data[,c('longitude','latitude')])
-  # sensors <- dplyr::mutate(sensors,
-  #                          names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-  #                                                   longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-  #                                                   longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-  #                                                   longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-  #                                                   longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-  #                                                   longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-  #                                                   longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-  #                                                   longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-  #                                                   longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-  #                                                   longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-  #                                                   longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
-  # )
-  #
-  # sensorNum <- nrow(sensors)
+  sensors <- unique(data[,c('longitude','latitude')])
+  sensors <- dplyr::mutate(sensors,
+                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+  )
+
+  sensorNum <- nrow(sensors)
+  }
+  
+  else{
   sensors <- unique(data[,c("longitude","latitude","names")])
   sensorNum <- length(unique(data$names))
+  }
+  
   #-------------------------------------------------------------------------------------#
 
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
@@ -111,13 +118,24 @@ hourlyPA <- function(data){
                         )
 
   #aggregate the data to get hourly averages per sensor location
+  if(new == TRUE){
+    
   for (i in 1:sensorNum) {
     agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
                      data = data[data$names == sensors[i,3],], mean)
 
     PAhourly <- rbind(PAhourly,agg)
   }
-
+  }
+  
+  else{
+    for (i in 1:sensorNum) {
+      agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
+                       data = data[data$longitude == sensors[i,1],], mean)
+      
+      PAhourly <- rbind(PAhourly,agg)
+    }}
+    
   PAhourly <- PAhourly[order(PAhourly$timestamp),]
   PAhourly[,2] <- round(PAhourly[,2],2)
   PAhourly[,3] <- round(PAhourly[,3],2)
