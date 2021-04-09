@@ -202,6 +202,15 @@ server <- function(input, output) {
         return(PAfull)
 
     })
+    
+    newPAfull <- reactive({
+        req(input$file1)
+        messyPA <- read.csv(input$file1$datapath)
+        
+        PAfull <- PurpleAirCEHAT::newCleanPA(messyPA)
+        
+        return(PAfull)
+    })
 
     PAhourly <- reactive({
         req(input$file1)
@@ -213,9 +222,10 @@ server <- function(input, output) {
     })
 
 
-
     summarySG <-reactive({
         req(input$file1)
+        
+        
         PAhourly <- PAhourly()
 
         avgSG <- PurpleAirCEHAT::summarySG(PAhourly)
@@ -259,8 +269,6 @@ server <- function(input, output) {
 
         return(sensors)
     })
-
-
 
 
     matchingDays <- reactive({
