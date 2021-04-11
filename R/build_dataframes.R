@@ -137,25 +137,84 @@ summarySG <- function(data) {
 
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
 
-  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp)) #uses the "timestamp" column
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp))
 
   avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
-                     data = data[lubridate::month(data$timestamp) >1,],
-                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = round(max(x),2), min=round(min(x),2)  ))
+                     data = data,
+                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = round(max(x),2), min=round(min(x),2), range = range(x)  ))
 
   PM2.5.median <- avgSG$PM2.5[,2]
   PM2.5.count <- avgSG$PM2.5[,3]
   PM2.5.max <- avgSG$PM2.5[,4]
   PM2.5.min <- avgSG$PM2.5[,5]
+  PM2.5.range <- avgSG$PM2.5[,6]
 
   avgSG <- data.frame()
 
   avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
-                     data = data[lubridate::month(data$timestamp) >1,], FUN= function(x) {round(mean(x),2)} )
+                     data = data[month(data$timestamp) >1,], FUN= function(x) {round(mean(x),2)} )
 
-  avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.count)
+  avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.range, PM2.5.count)
 
-  colnames(avgSG) <- c('timestamp', "average_PM2.5", "hour", 'day', "median_PM2.5", "max", "min", "active sensors")
+  colnames(avgSG) <- c('timestamp', "average_PM2.5", "hour", 'day', "median_PM2.5", "max", "min", "range", "active sensors")
+  avgSG <- dplyr::mutate(avgSG,
+                         category = dplyr::case_when(average_PM2.5 >= 0 & average_PM2.5 <=12 ~ "Good",
+                                                     average_PM2.5 >= 12.01 & average_PM2.5 <=35.4 ~ "Moderate",
+                                                     average_PM2.5 >= 35.41 & average_PM2.5 <= 55.4 ~ "Unhealthy for Sensitive Groups",
+                                                     average_PM2.5 >= 55.41 & average_PM2.5 <= 150.4 ~ "Unhealthy",
+                                                     average_PM2.5 >= 150.41 & average_PM2.5 <= 250.4 ~ "Very Unhealthy",
+                                                     average_PM2.5 >= 250.41 & average_PM2.5 <= 500 ~ "Hazardous",
+                                                     average_PM2.5 >= 500.01 ~ "Hazardous+")
+  )
+
+  avgSG
+
+}
+
+
+#' Daily Summary Data for South Gate
+#'
+#' This function aggregates data (output from the hourlyPA/cleanPA function) by hour for mean, median, max, min, and count of sensors
+#' It assumes that the data has the columns 'timestamp', 'day', 'hour' 'PM2.5.
+#'
+#' @param data the output dataframe of the hourlyPA or cleanPA functions
+#' @return a dataframe of the holistic South Gate data, including *weighted* sensor averages, sensor median, the max, and the min, and active count.
+#' @export
+
+dailySG <- function(data) {
+
+  data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
+
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp))
+
+  avgSG <- aggregate(cbind(PM2.5, longitude) ~ lubridate::mday(timestamp),
+                     data = data,
+                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(unique(x)),0), max = round(max(x),2), min=round(min(x),2)  ))
+
+  PM2.5.median <- avgSG$PM2.5[,2]
+  PM2.5.count <- avgSG$longitude[,"count"]
+  PM2.5.max <- avgSG$PM2.5[,4]
+  PM2.5.min <- avgSG$PM2.5[,5]
+  PM2.5.range <- PM2.5.max - PM2.5.min
+
+  avgSG <- data.frame()
+
+  avgSG <- aggregate(cbind(PM2.5) ~ as.Date(timestamp),
+                     data = data, FUN= function(x) {round(mean(x),2)} )
+
+  avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.range, PM2.5.count)
+
+  names(avgSG) <- c('day', "average_PM2.5", "median_PM2.5", "max", "min", "range", "active sensors")
+
+  avgSG <- dplyr::mutate(avgSG,
+                         category = dplyr::case_when(average_PM2.5 >= 0 & average_PM2.5 <=12 ~ "Good",
+                                                     average_PM2.5 >= 12.01 & average_PM2.5 <=35.4 ~ "Moderate",
+                                                     average_PM2.5 >= 35.41 & average_PM2.5 <= 55.4 ~ "Unhealthy for Sensitive Groups",
+                                                     average_PM2.5 >= 55.41 & average_PM2.5 <= 150.4 ~ "Unhealthy",
+                                                     average_PM2.5 >= 150.41 & average_PM2.5 <= 250.4 ~ "Very Unhealthy",
+                                                     average_PM2.5 >= 250.41 & average_PM2.5 <= 500 ~ "Hazardous",
+                                                     average_PM2.5 >= 500.01 ~ "Hazardous+")
+  )
 
   avgSG
 
@@ -480,18 +539,22 @@ compareSensors <- function(data, type = c('a', 'b')){
                                                     longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
                                                     longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
   )
+
+  sensorNum <- nrow(sensors)
   #-------------------------------------------------------------------------------------#
 
   num_readings <- aggregate(PM2.5 ~ names, data, FUN=length )
   colnames(num_readings) <- c('names', 'total_readings')
 
   #the percent breaks
-  bks <- c(0,15,30,50,70,100, 200, 300, 500, Inf)
+  bks <- c(0,15,50,100, 200, Inf)
   end <- length(bks)
 
   #initialize the data frame
-  pct_diffs <- as.data.frame(sensors$names)
-  names(pct_diffs) <- "names"
+  pct_diffs <- data.frame(matrix(0L, ncol = 6, nrow = sensorNum ))
+
+  names(pct_diffs) <- c("names", "0-15%", "15%-50%", "50%-100%", "100%-200%", "above_200%")
+  pct_diffs$names <- sensors$names
 
 
   #change less than or equal to back to just less than once you check the thing
@@ -509,16 +572,15 @@ compareSensors <- function(data, type = c('a', 'b')){
     readings <- dplyr::filter(data, PM2.5> median_PM2.5)
     readings$pct_over <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
 
-    pct_names <- c("below_15%", "below_30%", "below_50%", "below_70%", "below_100%", "below_200%", "below_300%", "below_500%", "above_500%")
-
     x<-1
     #counting each instance of readings under the median by percentage bin
     while (!plyr::empty(readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],])){
       u <- aggregate(PM2.5 ~ names,
                      data = readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],], FUN = length)
 
-      pct_diffs <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
-      names(pct_diffs)[x+1] <- pct_names[x]
+      index <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
+
+      pct_diffs[,x+1] <- index[,7]
       x <- x+1
     }
 
@@ -543,8 +605,7 @@ compareSensors <- function(data, type = c('a', 'b')){
     readings <- dplyr::filter(data, PM2.5< median_PM2.5)
     readings$pct_under <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
 
-    pct_names <- c("below_15%", "below_30%", "below_50%", "below_70%", "below_100%", "below_200%", "below_300%", "below_500%", "above_500%")
-
+    pct_names <- c("0-15%", "15%-50%", "50%-100%", "100%-200%", "above_200%")
 
     x<-1
     #counting each instance of readings under the median by percentage bin
@@ -552,8 +613,9 @@ compareSensors <- function(data, type = c('a', 'b')){
       u <- aggregate(PM2.5 ~ names,
                      data = readings[readings$pct_under>=bks[x] & readings$pct_under<=bks[x+1],], FUN = length)
 
-      pct_diffs <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
-      names(pct_diffs)[x+1] <- pct_names[x]
+      index <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
+
+      pct_diffs[,x+1] <- index[,7]
       x <- x+1
     }
 
