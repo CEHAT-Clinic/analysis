@@ -75,8 +75,8 @@ newCleanPA <- function(data){
 #' It also uses an EPA correction factor for PurpleAir sensors.
 #' Any readings with faulty channel A/B values will be dropped
 #'
-#' @param data a CLEANED dataframe of PurpleAir sensor data and a boolean specifying if we are using the new
-#' data (in which case you put TRUE) or the old data (in which cse you put FALSE)
+#' @param data a CLEANED dataframe of PurpleAir sensor data a boolean specifying if we are using the new
+#' @param new a boolean specifying if we are using the new data (in which case you put TRUE) or the old data (in which case you put FALSE)
 #' @return a dataframe of the hourly PA sensor data, with sensor names, days of the week, hour, and time of day
 #' @export
 
@@ -100,12 +100,12 @@ hourlyPA <- function(data,new){
 
   sensorNum <- nrow(sensors)
   }
-  
+
   else{
   sensors <- unique(data[,c("longitude","latitude","names")])
   sensorNum <- length(unique(data$names))
   }
-  
+
   #-------------------------------------------------------------------------------------#
 
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
@@ -119,7 +119,7 @@ hourlyPA <- function(data,new){
 
   #aggregate the data to get hourly averages per sensor location
   if(new == TRUE){
-    
+
   for (i in 1:sensorNum) {
     agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
                      data = data[data$names == sensors[i,3],], mean)
@@ -127,20 +127,20 @@ hourlyPA <- function(data,new){
     PAhourly <- rbind(PAhourly,agg)
   }
   }
-  
+
   else{
     for (i in 1:sensorNum) {
       agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
                        data = data[data$longitude == sensors[i,1],], mean)
-      
+
       PAhourly <- rbind(PAhourly,agg)
     }}
-    
+
   PAhourly <- PAhourly[order(PAhourly$timestamp),]
   PAhourly[,2] <- round(PAhourly[,2],2)
   PAhourly[,3] <- round(PAhourly[,3],2)
 
-  PAhourly$timestamp <- lubridate::ymd_hms(as.character(PAhourly$timestamp)) #change class from factor to POSIXct
+  PAhourly$timestamp <- lubridate::ymd_hms(as.character(PAhourly$timestamp),tz="America/Los_Angeles") #change class from factor to POSIXct
 
   #add days field so that we can aggregate max and min values by day. do this with hours as well
   PAhourly$day <- lubridate::mday(PAhourly$timestamp)
