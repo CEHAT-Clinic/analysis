@@ -3,9 +3,10 @@
 \name{overEPA_hist}
 \alias{overEPA_hist}
 \title{This function takes in a data frame of values that is cleaned by overEPA and
-returns a dataframe that fits in the histogram function}
+the number of days that we have sensor data for (not number of days that are over
+EPA threshold), and returns a dataframe that fits in the histogram function}
 \usage{
-overEPA_hist(daysOver)
+overEPA_hist(daysOver, numOfDays)
 }
 \arguments{
 \item{a}{dataframe of values from one sensor after being cleaned by overEPA}
@@ -15,5 +16,6 @@ a dataframe that fits in the histogram function
 }
 \description{
 This function takes in a data frame of values that is cleaned by overEPA and
-returns a dataframe that fits in the histogram function
+the number of days that we have sensor data for (not number of days that are over
+EPA threshold), and returns a dataframe that fits in the histogram function
 }

@@ -38,6 +38,36 @@ cleanPA <- function(data){
   data
 }
 
+
+#'
+#' This function cleans up the raw readings from the PA sensors and sets up a data frame.
+#' It assumes that the data has the columns
+#' c('Timestamp', "Names", "PM2.5", "Percent.Difference","Humidity", "Latitude",
+#' "Longitude") in that order. It drops negative PM2.5 values and cleans the time to match LA time.
+#' @param data a .csv of PurpleAir sensor data from the CEHAT website
+#' @return a dataframe of the full PurpleAir sensor data, with corrected timezone and PM2.5 levels
+#' @export
+
+newCleanPA <- function(data){
+
+  colnames(data) <- c("timestamp","names","PM2.5","percent.diff","humidity","latitude","longitude")
+
+  # converting to LA time
+  time_clean = lubridate::ymd_hms(data$timestamp, tz="America/Los_Angeles")
+  data$timestamp <- time_clean
+  data <- data[order(data$timestamp),]
+
+  #throwing out negative PM2.5 values
+  data <- dplyr::filter(data, PM2.5 >= 0)
+
+  #reorganizing the data frame
+
+  data <- data[,c(1,3,5,6,7,2,4)]
+
+  data
+
+}
+
 #' Aggregate Data by Hour
 #'
 #' This function aggregates the frequent readings from each sensor and averages them by hour.
@@ -45,11 +75,13 @@ cleanPA <- function(data){
 #' It also uses an EPA correction factor for PurpleAir sensors.
 #' Any readings with faulty channel A/B values will be dropped
 #'
-#' @param data a CLEANED dataframe of PurpleAir sensor data
+#' @param data a CLEANED dataframe of PurpleAir sensor data and a boolean specifying if we are using the new
+#' data (in which case you put TRUE) or the old data (in which cse you put FALSE)
 #' @return a dataframe of the hourly PA sensor data, with sensor names, days of the week, hour, and time of day
 #' @export
 
-hourlyPA <- function(data){
+hourlyPA <- function(data,new){
+  if (new == FALSE){
   #-------------------------------------------------------------------------------------#
   sensors <- unique(data[,c('longitude','latitude')])
   sensors <- dplyr::mutate(sensors,
@@ -67,6 +99,13 @@ hourlyPA <- function(data){
   )
 
   sensorNum <- nrow(sensors)
+  }
+  
+  else{
+  sensors <- unique(data[,c("longitude","latitude","names")])
+  sensorNum <- length(unique(data$names))
+  }
+  
   #-------------------------------------------------------------------------------------#
 
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
@@ -75,16 +114,28 @@ hourlyPA <- function(data){
                          PM2.5=double(),
                          humidity=double(),
                          latitude=double(),
-                         longitude=double())
+                         longitude=double()
+                        )
 
   #aggregate the data to get hourly averages per sensor location
+  if(new == TRUE){
+    
   for (i in 1:sensorNum) {
     agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
-                     data = data[data$longitude == sensors[i,1],], mean)
+                     data = data[data$names == sensors[i,3],], mean)
 
     PAhourly <- rbind(PAhourly,agg)
   }
-
+  }
+  
+  else{
+    for (i in 1:sensorNum) {
+      agg <- aggregate(cbind(PM2.5, humidity, latitude, longitude) ~ timestamp,
+                       data = data[data$longitude == sensors[i,1],], mean)
+      
+      PAhourly <- rbind(PAhourly,agg)
+    }}
+    
   PAhourly <- PAhourly[order(PAhourly$timestamp),]
   PAhourly[,2] <- round(PAhourly[,2],2)
   PAhourly[,3] <- round(PAhourly[,3],2)
@@ -289,7 +340,7 @@ AQIdataframe <- function(data){
 
 
 
-#' This function takes in data, specifically the name of a read csv file with
+#' This function takess in data, specifically the name of a read csv file with
 #' timestamps, PM2.5, humidity, latitude and longitude
 #' It then cleans the changes the timestamps so that they match the
 #' timstamps of the purple air data.
@@ -328,7 +379,7 @@ cleanAQMD <- function(data){
       data[i,1] <- paste(date, time,sep = ' ')
     }
   }
-
+  #data$Date.Time <- lubridate::ymd_hms(data$Date.Time, tz="America/Los_Angeles")
   data
 }
 
@@ -408,16 +459,20 @@ overEPA <- function(ourData){
 }
 
 #' This function takes in a data frame of values that is cleaned by overEPA and
-#' returns a dataframe that fits in the histogram function
+#' the number of days that we have sensor data for (not number of days that are over
+#' EPA threshold), and returns a dataframe that fits in the histogram function
 #' @param a dataframe of values from one sensor after being cleaned by overEPA
 #' @return a dataframe that fits in the histogram function
 #' @export
 #'
-overEPA_hist <- function(daysOver){
+overEPA_hist <- function(daysOver,numOfDays){
 
   list <- c()
   days <- c()
-  for (day in (1:31)){
+
+  numOfDays <- 31
+  # find the frequency of the days over the EPA threshold
+  for (day in (1:numOfDays)){
     freq <- 0
     for (hour in (1:length(daysOver$timestamp))){
       dayF <- c()
@@ -427,9 +482,10 @@ overEPA_hist <- function(daysOver){
     list <- c(list,freq)
     days <- append(days,dayF)}
 
-  df <- data.frame(day = seq(1,31,by=1),
+  df <- data.frame(day = seq(1,numOfDays,by=1),
                    freq = list)
 
+  # find what days correspond to those frequencies
   total <- 0
 
   for (i in (1:length(list))) {
@@ -441,6 +497,7 @@ overEPA_hist <- function(daysOver){
     if (list[i] != 0) {df$days1[i] <- df$days[i]}
     else{df$days1[i] <- 0}}
 
+  # make a dataframe corresponding to these values
   df <- df[,-c(3)]
   names(df)[3] <- "days"
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/build_dataframes.R
 \name{cleanAQMD}
 \alias{cleanAQMD}
-\title{This function takes in data, specifically the name of a read csv file with
+\title{This function takess in data, specifically the name of a read csv file with
 timestamps, PM2.5, humidity, latitude and longitude
 It then cleans the changes the timestamps so that they match the
 timstamps of the purple air data.}
@@ -17,7 +17,7 @@ it returns a dataframe with hourly time (in the format of Ymd hms),
 PM2.5, humidity, latitude and longitude
 }
 \description{
-This function takes in data, specifically the name of a read csv file with
+This function takess in data, specifically the name of a read csv file with
 timestamps, PM2.5, humidity, latitude and longitude
 It then cleans the changes the timestamps so that they match the
 timstamps of the purple air data.
