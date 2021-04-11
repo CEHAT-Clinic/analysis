@@ -15,6 +15,7 @@ library(gridExtra)
 library(PurpleAirCEHAT)
 library(lubridate)
 library(shinythemes)
+suppressPackageStartupMessages(library(assertive))
 
 sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
 #set the max file size to be 1000 Mb
@@ -38,7 +39,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                          h2("Overview"),
                                          p("Welcome to the South Gate CEHAT Data Analysis report"),
                                          br(),
-                                         p("First, select your", strong("PurpleAir csv file,"), "press the button that corresponds to the time that the data was downloaded, then confirm which sensors you wish to include"),
+                                         p("First, select your", strong("PurpleAir csv file,"), "answer the question asked, then confirm which sensors you wish to include"),
                                          br(),
                                          
                                          # Input: Select a file ---- PurpleAir
@@ -48,9 +49,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                                               "text/comma-separated-values,text/plain",
                                                               ".csv")),
                                          
-                                         #p(strong("Was this data downloaded before March 31st, 2021?")),
-                                         textInput("answer",label = "Was this data downloaded before March 31st, 2021? (Y/N)"),
-                                         #actionButton("newData",label = "No",icon = icon("times")),
+                                         p(strong("Was this data downloaded before March 31st, 2021? (Y/N)")),
+                                         textInput("answer",label = ""),
+                                         #actionButton("yes",label = "Yes",icon = icon("check")),
+                                         #actionButton("no",label = "No", icon =icon("times")),
                                          br(),
                                          br(),
                                          p(strong("Confirm which sensors you'd like to include.")),
@@ -458,11 +460,12 @@ server <- function(input, output) {
     PAhourly <- reactive({
         req(input$file1)
         req(input$answer)
+
         
         sensors <- sensorsList()
         
         if(input$answer == "n" | input$answer == "N" ){
-            PAfull <- PurpleAirCEHAT::newPAfull()
+            PAfull <- newPAfull()
             PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, TRUE)}
         
         else if (input$answer == "y" | input$answer == "Y"){
@@ -1101,7 +1104,7 @@ server <- function(input, output) {
     output$prediction <- renderPlotly({
         req(input$date1)
         
-        PAhourly <- PAhourly() %>% filter(PAhourly()$timestamp == as_datetime(input$date1))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
         
         if(length(input$sensorSel) >= 5){
             autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
@@ -1125,7 +1128,7 @@ server <- function(input, output) {
     output$variance <- renderPlotly({
         req(input$date1)
         
-        PAhourly <- PAhourly() %>% filter(PAhourly()$timestamp == as_datetime(input$date1))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
         
         if(length(input$sensorSel) >= 5){        
             autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
@@ -1150,7 +1153,7 @@ server <- function(input, output) {
     output$stdev <- renderPlotly({
         req(input$date1)
         
-        PAhourly <- PAhourly() %>% filter(PAhourly()$timestamp == as_datetime(input$date1))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
         
         if(length(input$sensorSel) >= 5){
             autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
