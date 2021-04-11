@@ -32,7 +32,8 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
         # Sidebar panel for inputs ----
         sidebarPanel(
             tags$h3("Choose data:"),
-
+            
+            actionButton("oldData",label = "If you are using using Purple Air data from before March 31st, 2021, click this button." ),
             # Input: Select a file ----
             fileInput("file1", "Choose PurpleAir CSV File",
                       multiple = TRUE,
@@ -216,7 +217,7 @@ server <- function(input, output) {
         req(input$file1)
         PAfull <- PAfull()
 
-        PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull)
+        PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull,FALSE)
 
         return(PAhourly)
     })
