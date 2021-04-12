@@ -1,0 +1,13 @@
+name: analysis
+title: analysis
+username:
+account: hillaryrodriguez
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3912740
+bundleId: 4456629
+url: https://hillaryrodriguez.shinyapps.io/analysis/
+when: 1618127654.22743
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: centralLA_readings.csv|december2020_readings.csv|indio_readings.csv|pm25_april.csv|README.md

@@ -19,7 +19,7 @@ library(testthat)
 library(tryCatchLog)
 library(futile.logger)
 
-sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
+#sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
 #set the max file size to be 1000 Mb
 options(shiny.maxRequestSize = 10000*1024^2)
 
@@ -103,30 +103,30 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                              plotlyOutput("pastWeek"),
                                              plotlyOutput("pastMonth"),
                                              
-                                             p("Percentiles of the PM2.5 data"),
-                                             p("15% of the PM2.5 readings lies below <value>"),
-                                             p("30% of the PM2.5 readings lies below <value>"),
-                                             p("50% of the PM2.5 readings lies below <value>"),
-                                             p("75% of the PM2.5 readings lies below <value>"),
-                                             p("95% of the PM2.5 readings lies below <value>"),
-                                             textOutput("percentiles"),
-                                             br(),
-                                             p("Second Max for 24-hour PM2.5"),
-                                             textOutput("secondMax"),
-                                             p("Table of second maxes"),
-                                             br(),
-                                             p("For file input 1:"),
-                                             p("The number of days over EPA threshold from <date> to <date> is: ___"),
-                                             p("The longest consecutive of days over EPA threshold from <date> to <date> is: ___, and it occurs from <date> to <date>"),
-                                             p("On average, the daily peak for PM2.5 concentrations in South Gate occurs during the hours of ___ and ___"),
-                                             p("This is most likely due to common traffic flow, and is typically referred to as the diurnal cycle."),
-                                             br(),
-                                             p("<percentage> of PM2.5 readings are in the 'Good' category"),
-                                             p("<percentage> of PM2.5 readings are in the 'Moderate' category"),
-                                             p("<percentage> of PM2.5 readings are in the 'Unhealthy for Sensitive Groups' category"),
-                                             p("<percentage> of PM2.5 readings are in the 'Unhealthy' category"),
-                                             p("<percentage> of PM2.5 readings are in the 'Very Unhealthy' category"),
-                                             p("<percentage> of PM2.5 readings are in the 'Hazardous' category"),
+                                             # p("Percentiles of the PM2.5 data"),
+                                             # p("15% of the PM2.5 readings lies below <value>"),
+                                             # p("30% of the PM2.5 readings lies below <value>"),
+                                             # p("50% of the PM2.5 readings lies below <value>"),
+                                             # p("75% of the PM2.5 readings lies below <value>"),
+                                             # p("95% of the PM2.5 readings lies below <value>"),
+                                             # textOutput("percentiles"),
+                                             # br(),
+                                             # p("Second Max for 24-hour PM2.5"),
+                                             # textOutput("secondMax"),
+                                             # p("Table of second maxes"),
+                                             # br(),
+                                             # p("For file input 1:"),
+                                             # p("The number of days over EPA threshold from <date> to <date> is: ___"),
+                                             # p("The longest consecutive of days over EPA threshold from <date> to <date> is: ___, and it occurs from <date> to <date>"),
+                                             # p("On average, the daily peak for PM2.5 concentrations in South Gate occurs during the hours of ___ and ___"),
+                                             # p("This is most likely due to common traffic flow, and is typically referred to as the diurnal cycle."),
+                                             # br(),
+                                             # p("<percentage> of PM2.5 readings are in the 'Good' category"),
+                                             # p("<percentage> of PM2.5 readings are in the 'Moderate' category"),
+                                             # p("<percentage> of PM2.5 readings are in the 'Unhealthy for Sensitive Groups' category"),
+                                             # p("<percentage> of PM2.5 readings are in the 'Unhealthy' category"),
+                                             # p("<percentage> of PM2.5 readings are in the 'Very Unhealthy' category"),
+                                             # p("<percentage> of PM2.5 readings are in the 'Hazardous' category"),
                                              
                                              
                                              #Output: Data file ----
