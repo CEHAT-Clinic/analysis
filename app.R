@@ -561,7 +561,7 @@ server <- function(input, output) {
         PAhourly <- PAhourly()
         avgSG <- summarySG()
         
-        PAhourly <- dplyr::left_join(PAhourly, avgSG, by = c("timestamp", "hour", "day"), keep=F)
+        PAhourly <- dplyr::left_join(PAhourly, avgSG, by = c("timestamp", "hour", "day"), keep=FP)
         
         readings_overCT <- PurpleAirCEHAT::compareSensors(PAhourly,'a')
         
