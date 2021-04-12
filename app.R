@@ -15,9 +15,11 @@ library(gridExtra)
 library(PurpleAirCEHAT)
 library(lubridate)
 library(shinythemes)
-suppressPackageStartupMessages(library(assertive))
+library(testthat)
+library(tryCatchLog)
+library(futile.logger)
 
-sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
+#sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
 #set the max file size to be 1000 Mb
 options(shiny.maxRequestSize = 10000*1024^2)
 
@@ -211,7 +213,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                            a("AB 617 Community Air Monitoring website.",
                                              href = "http://xappprod.aqmd.gov/AB617CommunityAirMonitoring/")),
                                          
-                                         strong("Upload your", em("AQMD csv file"), "here:"),
+                                         #strong("Upload your", em("AQMD csv file"), "here:"),
                                          
                                          # Input: Select a file ---- AQMD
                                          fileInput("file2", "Choose AQMD CSV File",
@@ -475,6 +477,7 @@ server <- function(input, output) {
         PAhourly %>% 
             dplyr::filter(names %in% sensors$names)
         
+        PAhourly[PAhourly$PM2.5 <= mean(PAhourly$PM2.5)*20,]
         #return(PAhourly)
     })
     
@@ -791,7 +794,7 @@ server <- function(input, output) {
             geom_col(aes(y=`50%-100%`, fill="50%-100%"), col=1) +
             geom_col(aes(y=`above_200%`, fill="200% or more"), col=1) +
             labs(x = "Sensors", y = "Count") +
-            ggtitle("Readings Over Median by Sensor")+
+            ggtitle("Readings Under Median by Sensor")+
             theme_minimal()+
             scale_colour_manual(name="Values",values=pct_diffCols, guide = guide_legend(override.aes=aes(fill=NA)) ) +
             scale_fill_manual(name="Values",values=pct_diffCols) +
@@ -1066,7 +1069,7 @@ server <- function(input, output) {
         stacked <- ggplot(PurpleAirCEHAT::compareDataDF(matchingDays,nameOfCity), aes(fill=city, y=PM2.5, x=day)) +
             geom_bar(position="dodge", stat="identity") +
             geom_col(width = 0.7, position = position_dodge(0.9)) +
-            ggtitle("Stacked Bar Chart of PM2.5 values")
+            ggtitle("Bar Chart of PM2.5 values")
         
         ggplotly(stacked)
     })
@@ -1198,6 +1201,25 @@ server <- function(input, output) {
         }
     )
     
+    test_that("error handler with unwrapped 0-param R function does throw an error", {
+        
+        expect_error(
+            tryCatchLog(
+                stop("an error occured"),
+                error = geterrmessage    # has no parameter (at least in R version 3.4.2 :-)
+            ),
+            "unused argument (cond)", fixed = TRUE)    # Error in value[[3L]](cond) : unused argument (FALSE)
+        
+    })
+    
+    options(warning.expression = 
+                quote({
+                    if(exists("last.warning",baseenv()) && !is.null(last.warning)){
+                        txt = paste0(names(last.warning),collapse=" ")
+                        try(suppressWarnings(flog.warn(txt)))
+                        cat("Warning message:\n",txt,'\n',sep = "")
+                    } 
+                }))
     
 } #--server
 
