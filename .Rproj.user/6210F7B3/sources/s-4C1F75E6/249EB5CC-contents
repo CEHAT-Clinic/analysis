@@ -106,16 +106,17 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              plotlyOutput("pastMonth"),
 
                                              h4("Percentiles of the PM2.5 data"),
-                                             p("15% of the PM2.5 readings lies below", verbatimTextOutput("percentiles1")),
-                                             p("30% of the PM2.5 readings lies below", verbatimTextOutput("percentiles2")),
-                                             p("50% of the PM2.5 readings lies below", verbatimTextOutput("percentiles3")),
-                                             p("75% of the PM2.5 readings lies below", verbatimTextOutput("percentiles4")),
-                                             p("95% of the PM2.5 readings lies below", verbatimTextOutput("percentiles5")),
+                                             p("25% of the PM2.5 readings lie below", verbatimTextOutput("percentiles1")),
+                                             p("33% of the PM2.5 readings lie below", verbatimTextOutput("percentiles2")),
+                                             p("50% of the PM2.5 readings lie below", verbatimTextOutput("percentiles3")),
+                                             p("66% of the PM2.5 readings lie below", verbatimTextOutput("percentiles4")),
+                                             p("75% of the PM2.5 readings lie below", verbatimTextOutput("percentiles5")),
+                                             p("95% of the PM2.5 readings lie below", verbatimTextOutput("percentiles6")),
                                              br(),
                                              h4("Second Max for 24-hour PM2.5:",  verbatimTextOutput("secondMax")),
 
                                              br(),
-                                             p("For the given PurpleAir Data"),
+                                             h4("For the given PurpleAir Data"),
                                              # p("The number of days over EPA threshold from:"),
                                              # p("<date> to <date> is: ___"),
                                              # p("The longest consecutive of days over EPA threshold from:"),
@@ -589,12 +590,6 @@ server <- function(input, output) {
     # RENDERING PLOTS, TEXT, and TABLES
     ##############################################
 
-    observe({
-        PAhourly <- PAhourly()
-        x<-PAhourly %>% dplyr::count(category)
-        print(x)
-    })
-
     output$maxHour <- renderText({
         req(input$file1)
         avgSG <- summarySG()
@@ -995,7 +990,7 @@ server <- function(input, output) {
 
         avgSG <- summarySG()
 
-        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
         percentiles[1]
     })
@@ -1005,7 +1000,7 @@ server <- function(input, output) {
 
         avgSG <- summarySG()
 
-        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
         percentiles[2]
     })
@@ -1015,7 +1010,7 @@ server <- function(input, output) {
 
         avgSG <- summarySG()
 
-        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
         percentiles[3]
     })
@@ -1025,7 +1020,7 @@ server <- function(input, output) {
 
         avgSG <- summarySG()
 
-        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
         percentiles[4]
     })
@@ -1035,9 +1030,19 @@ server <- function(input, output) {
 
         avgSG <- summarySG()
 
-        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
         percentiles[5]
+    })
+
+    output$percentiles6 <- renderText({
+        req(input$file1)
+
+        avgSG <- summarySG()
+
+        percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
+
+        percentiles[6]
     })
 
     output$secondMax <- renderText({
