@@ -590,12 +590,6 @@ server <- function(input, output) {
     # RENDERING PLOTS, TEXT, and TABLES
     ##############################################
 
-    observe({
-        PAhourly <- PAhourly()
-        x<-PAhourly %>% dplyr::count(category)
-        print(x)
-    })
-
     output$maxHour <- renderText({
         req(input$file1)
         avgSG <- summarySG()
