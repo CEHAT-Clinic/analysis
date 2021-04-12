@@ -10,7 +10,7 @@ southgate <- function(){
   sg <- dplyr::filter(cities, NAME == "South Gate")
 
   sg.city <- as(sg, "Spatial")
-  sg.city <- sp::spTransform(sg.city, CRSobj = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+  sg.city <- sp::spTransform(sg.city, CRSobj = sp::CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
   sg.city
 }
 
@@ -28,7 +28,7 @@ southgate_grid <- function() {
   sg <- dplyr::filter(cities, NAME == "South Gate")
 
   sg.city <- as(sg, "Spatial")
-  sg.city <- sp::spTransform(sg.city, CRSobj = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+  sg.city <- sp::spTransform(sg.city, CRSobj = sp::CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
 
   long.range <- as.numeric(range(sg.city@bbox[1,]))
   lat.range <- as.numeric(range(sg.city@bbox[2,]))
