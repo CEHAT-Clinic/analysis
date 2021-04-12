@@ -238,7 +238,7 @@ dailySG <- function(data) {
 
   data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp), tz = "America/Los_Angeles")
 
-  avgSG <- aggregate(cbind(PM2.5, longitude) ~ lubridate::mday(timestamp),
+  avgSG <- aggregate(cbind(PM2.5, longitude) ~ as.Date(timestamp),
                      data = data,
                      FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(unique(x)),0), max = round(max(x),2), min=round(min(x),2)  ))
 
