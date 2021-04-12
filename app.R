@@ -51,7 +51,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                                               "text/comma-separated-values,text/plain",
                                                               ".csv")),
                                          
-                                         p(strong("Was this data downloaded before March 31st, 2021? (Y/N)")),
+                                         p(strong("Was this data downloaded before April 2nd, 2021? (Y/N)")),
                                          textInput("answer",label = ""),
                                          #actionButton("yes",label = "Yes",icon = icon("check")),
                                          #actionButton("no",label = "No", icon =icon("times")),
