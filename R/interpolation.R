@@ -16,7 +16,7 @@ krigePA <- function(data, time){
   slicecoords <- slicePA[,c("longitude","latitude")]
 
   sliceSP <- sp::SpatialPointsDataFrame(data = slicePA, coords = slicecoords,
-                                    proj4string = rgdal::CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+                                    proj4string = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
 
   sg.grid <- southgate_grid()
 
