@@ -19,7 +19,7 @@ library(testthat)
 library(tryCatchLog)
 library(futile.logger)
 
-#sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
+sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
 #set the max file size to be 1000 Mb
 options(shiny.maxRequestSize = 10000*1024^2)
 
@@ -561,7 +561,7 @@ server <- function(input, output) {
         PAhourly <- PAhourly()
         avgSG <- summarySG()
         
-        PAhourly <- dplyr::left_join(PAhourly, avgSG, by = c("timestamp", "hour", "day"), keep=FP)
+        PAhourly <- dplyr::left_join(PAhourly, avgSG, by = c("timestamp", "hour", "day"), keep=F)
         
         readings_overCT <- PurpleAirCEHAT::compareSensors(PAhourly,'a')
         
