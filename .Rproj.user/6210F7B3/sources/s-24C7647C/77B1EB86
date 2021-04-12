@@ -1,0 +1,25 @@
+{
+    "id": "77B1EB86",
+    "path": "~/PurpleAirCEHAT/R/maps.R",
+    "project_path": "R/maps.R",
+    "type": "r_source",
+    "hash": "1354156708",
+    "contents": "",
+    "dirty": true,
+    "created": 1616448455820.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "cursorPosition": "37,68",
+        "scrollLine": "14",
+        "disableDependencyDiscovery": "1"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1618211971,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1618211971817,
+    "read_only": false,
+    "read_only_alternatives": []
+}

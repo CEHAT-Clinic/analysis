@@ -592,7 +592,8 @@ server <- function(input, output) {
     observe({
         PAhourly <- PAhourly()
         x<-PAhourly %>% dplyr::count(category)
-        print(x)
+        print(x[x$category == "Good",2])
+        x[x$category == "Hazardous",2]
     })
 
     output$maxHour <- renderText({
@@ -905,7 +906,7 @@ server <- function(input, output) {
         x<-PAhourly %>% dplyr::count(category)
 
         if(is.null(x)){
-            q <- "0 %"
+            q <- "0%"
         }
         else if(x[x$category == "Good",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
@@ -920,7 +921,7 @@ server <- function(input, output) {
         x<-PAhourly %>% dplyr::count(category)
 
         if(is.null(x)){
-            q <- "0 %"
+            q <- "0%"
         }
         else if(x[x$category == "Moderate",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
@@ -934,8 +935,8 @@ server <- function(input, output) {
         PAhourly <- PAhourly()
 
         x<-PAhourly %>% dplyr::count(category)
-        if(is.null(x)==TRUE){
-            q <- "0 %"
+        if(is.null(x)){
+            q <- "0%"
         }
         else if(x[x$category == "Unhealthy for Sensitive Groups",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
@@ -949,8 +950,8 @@ server <- function(input, output) {
         PAhourly <- PAhourly()
 
         x<-PAhourly %>% dplyr::count(category)
-        if(is.null(x)==TRUE){
-            q <- "0 %"
+        if(is.null(x)){
+            q <- "0%"
         }
         else if(x[x$category == "Unhealthy",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
@@ -965,8 +966,8 @@ server <- function(input, output) {
 
         x<-PAhourly %>% dplyr::count(category)
 
-        if(is.null(x)==TRUE){
-            q <- "0 %"
+        if(is.null(x)){
+            q <- "0%"
         }
         else if(x[x$category == "Very Unhealthy",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
@@ -980,8 +981,8 @@ server <- function(input, output) {
         PAhourly <- PAhourly()
 
         x<-PAhourly %>% dplyr::count(category)
-        if(is.null(x)==TRUE){
-            q <- "0.0 %"
+        if(is.null(x)){
+            q <- "0%"
         }
         else if(x[2,2]/sum(x[,2])<0.01){
             q <- "< 0.01%"

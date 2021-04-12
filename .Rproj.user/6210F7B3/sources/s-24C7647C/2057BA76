@@ -1,0 +1,25 @@
+{
+    "id": "2057BA76",
+    "path": "~/PurpleAirCEHAT/R/interpolation.R",
+    "project_path": "R/interpolation.R",
+    "type": "r_source",
+    "hash": "2081269155",
+    "contents": "",
+    "dirty": false,
+    "created": 1617601769219.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "tempName": "Untitled1",
+        "cursorPosition": "16,0",
+        "scrollLine": "1"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1618210395,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1618210395724,
+    "read_only": false,
+    "read_only_alternatives": []
+}
