@@ -19,7 +19,7 @@ library(testthat)
 library(tryCatchLog)
 library(futile.logger)
 
-sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
+#sensors <- hourlyPA(cleanPA(read.csv("december2020_readings.csv")),FALSE)
 #set the max file size to be 1000 Mb
 options(shiny.maxRequestSize = 10000*1024^2)
 
