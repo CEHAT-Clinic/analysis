@@ -1,0 +1,24 @@
+{
+    "id": "29F982D1",
+    "path": "~/PurpleAirCEHAT/app.R",
+    "project_path": "app.R",
+    "type": "r_source",
+    "hash": "2630873482",
+    "contents": "",
+    "dirty": false,
+    "created": 1618377300033.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "cursorPosition": "44,46",
+        "scrollLine": "31"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1618378320,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1618378320254,
+    "read_only": false,
+    "read_only_alternatives": []
+}
