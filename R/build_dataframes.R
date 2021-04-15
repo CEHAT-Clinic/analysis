@@ -198,7 +198,7 @@ summarySG <- function(data) {
   PM2.5.count <- avgSG$PM2.5[,3]
   PM2.5.max <- avgSG$PM2.5[,4]
   PM2.5.min <- avgSG$PM2.5[,5]
-  PM2.5.range <- avgSG$PM2.5[,6]
+  PM2.5.range <- PM2.5.max - PM2.5.min
 
   avgSG <- data.frame()
 
