@@ -4,10 +4,12 @@
 \alias{downSensors}
 \title{Down Sensors?}
 \usage{
-downSensors(data)
+downSensors(data, new)
 }
 \arguments{
 \item{data}{a dataframe of hourly PurpleAir sensor data from the CEHAT website}
+
+\item{new}{a boolean specifying if you are using the new data format (in which case you put TRUE) or the old data format (in which case you put FALSE)}
 }
 \value{
 a list object including the logical dataframe showing when sensors went down and the corresponding numerical representation of this, which counts the days

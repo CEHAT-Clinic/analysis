@@ -4,12 +4,14 @@
 \alias{compareSensors}
 \title{Above/Below Median}
 \usage{
-compareSensors(data, type = c("a", "b"))
+compareSensors(data, type = c("a", "b"), new)
 }
 \arguments{
 \item{data}{output of the hourlyPA function (a dataframe of hourly PurpleAir sensor data)}
 
 \item{type}{a single-character string indicating whether values above or below the median should be returned}
+
+\item{new}{a boolean specifying if you are using the new data format (in which case you put TRUE) or the old data format (in which case you put FALSE)}
 }
 \value{
 a dataframe that details how many readings are above/below the median for each sensor, along with that sensors total readings

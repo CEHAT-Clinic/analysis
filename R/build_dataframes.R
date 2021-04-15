@@ -189,7 +189,7 @@ summarySG <- function(data) {
   data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
 
   data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp), tz ="America/Los_Angeles")
-    
+
   avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
                      data = data,
                      FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = round(max(x),2), min=round(min(x),2), range = range(x)  ))
@@ -291,15 +291,15 @@ highslows <- function(data) {
   hi_lo <- data.frame()
 
   for (i in 1:sensorNum) {
-    high <- aggregate(cbind(PM2.5, latitude, longitude) ~ day,
-                      data = data[data$longitude == sensors[i,1] & lubridate::month(data$timestamp) >1,], max)
+    high <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                      data = data[data$longitude == sensors[i,1],], max)
 
     nhighs <- nrow(high)
     type <- c(type = rep(c("high"), nhighs))
     high$type <- type
 
-    low <- aggregate(cbind(PM2.5, latitude, longitude) ~ day,
-                     data = data[data$longitude == sensors[i,1] & lubridate::month(data$timestamp)>1, ], min)
+    low <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                     data = data[data$longitude == sensors[i,1], ], min)
 
     nvals <- nrow(low)
     type <- c(type = rep(c("low"), nvals))
@@ -307,14 +307,19 @@ highslows <- function(data) {
 
     hi_lo <- rbind(hi_lo,high,low)
   }
+  names(hi_lo)[1] <- "date"
+  hi_lo$day <- lubridate::mday(hi_lo$date)
 
   hi_lo <- dplyr::left_join(hi_lo, data, by = c("PM2.5", "day","latitude","longitude"), keep= F)
-  hi_lo <- hi_lo[order(hi_lo$day),]
 
-  hi_lo <- hi_lo[!duplicated(hi_lo[,c(1,2,5,11)]),]
+  hi_lo <- hi_lo[order(hi_lo$Date),]
+
+  hi_lo <- hi_lo[!duplicated(hi_lo[,c("date","PM2.5","type","names")]),]
 
   hi_lo
 }
+
+
 
 
 #' This function takes in data, specifically the name of a csv file with
@@ -509,43 +514,55 @@ overEPA_hist <- function(daysOver,numOfDays){
 #' This reports which sensors were down and on which days that they went down. This
 #'
 #' @param data a dataframe of hourly PurpleAir sensor data from the CEHAT website
+#' @param new a boolean specifying if you are using the new data format (in which case you put TRUE) or the old data format (in which case you put FALSE)
 #' @return a list object including the logical dataframe showing when sensors went down and the corresponding numerical representation of this, which counts the days
 #' @export
 
-downSensors <- function(data){
+downSensors <- function(data, new){
   #---------------------------------------------------#
-  sensors <- unique(data[,c('longitude','latitude')])
-  sensors <- dplyr::mutate(sensors,
-                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
-  )
+  if (new == FALSE){
+    #-------------------------------------------------------------------------------------#
+    sensors <- unique(data[,c('longitude','latitude')])
+    sensors <- dplyr::mutate(sensors,
+                             names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                      longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                      longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                      longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                      longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                      longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                      longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                      longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                      longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                      longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                      longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+    )
 
-  sensorNum <- nrow(sensors)
+    sensorNum <- nrow(sensors)
+  }
+
+  else{
+    sensors <- unique(data[,c("longitude","latitude","names")])
+    sensorNum <- length(unique(data$names))
+  }
 
   totalDays <- unique(cut(data$timestamp, breaks="day"))
+
+  totalDays <- as.Date(totalDays, tz= "America/Los_Angeles")
 
   numDays <- length(totalDays)
   #---------------------------------------------------#
 
-  downSensors <- data.frame(matrix(ncol = sensorNum+1, nrow = length(totalDays) ))
+  downSensors <- data.frame(matrix(ncol = sensorNum+1, nrow = numDays ))
 
   downSensors[,1] <- totalDays
+
 
   #was sensor i down on day k? (FALSE if yes, TRUE if no)
   for(i in 1:sensorNum){
     names(downSensors)[i+1] <- sensors$names[i]
     q <- c()
-    for(k in 1:31){
-      if (sensors$names[i] %in% data$names[data$day==k]){
+    for(k in 1:numDays){
+      if (sensors$names[i] %in% data$names[as.Date(data$timestamp, tz= "America/Los_Angeles") == totalDays[k]]){
         q <- c(q,TRUE)
       }
       else{
@@ -577,27 +594,35 @@ downSensors <- function(data){
 #'
 #' @param data output of the hourlyPA function (a dataframe of hourly PurpleAir sensor data)
 #' @param type a single-character string indicating whether values above or below the median should be returned
+#' @param new a boolean specifying if you are using the new data format (in which case you put TRUE) or the old data format (in which case you put FALSE)
 #' @return a dataframe that details how many readings are above/below the median for each sensor, along with that sensors total readings
 #' @export
 
-compareSensors <- function(data, type = c('a', 'b')){
+compareSensors <- function(data, type = c('a', 'b'), new){
   #-------------------------------------------------------------------------------------#
-  sensors <- unique(data[,c('longitude','latitude')])
-  sensors <- dplyr::mutate(sensors,
-                           names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-                                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-                                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-                                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-                                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-                                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-                                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-                                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-                                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-                                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-                                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
-  )
+  if (new == FALSE){
+    sensors <- unique(data[,c('longitude','latitude')])
+    sensors <- dplyr::mutate(sensors,
+                             names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                      longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                      longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                      longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                      longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                      longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                      longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                      longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                      longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                      longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                      longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+    )
 
-  sensorNum <- nrow(sensors)
+    sensorNum <- nrow(sensors)
+  }
+
+  else{
+    sensors <- unique(data[,c("longitude","latitude","names")])
+    sensorNum <- length(unique(data$names))
+  }
   #-------------------------------------------------------------------------------------#
 
   num_readings <- aggregate(PM2.5 ~ names, data, FUN=length )
@@ -650,7 +675,7 @@ compareSensors <- function(data, type = c('a', 'b')){
   }
   else{
     readings_under <- aggregate(PM2.5 ~ names,
-                               data = data[data$PM2.5< data$median_PM2.5,], FUN=length )
+                                data = data[data$PM2.5< data$median_PM2.5,], FUN=length )
     colnames(readings_under) <- c("names", "count")
 
     #add longitude and latitude, for mapping
