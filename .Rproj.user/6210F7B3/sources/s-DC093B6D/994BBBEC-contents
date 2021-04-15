@@ -312,7 +312,7 @@ highslows <- function(data) {
 
   hi_lo <- dplyr::left_join(hi_lo, data, by = c("PM2.5", "day","latitude","longitude"), keep= F)
 
-  hi_lo <- hi_lo[order(hi_lo$Date),]
+  hi_lo <- hi_lo[order(hi_lo$date),]
 
   hi_lo <- hi_lo[!duplicated(hi_lo[,c("date","PM2.5","type","names")]),]
 
