@@ -1,0 +1,32 @@
+{
+    "id": "6C2869B3",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1618501894433.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "expression": "pm25_april",
+        "caption": "pm25_april",
+        "totalObservations": 33232,
+        "displayedObservations": 33232,
+        "variables": 7,
+        "cacheKey": "5C7ED9BC",
+        "object": "pm25_april",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=pm25_april&cache_key=5C7ED9BC&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1929061758472,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1618501894433,
+    "read_only": false,
+    "read_only_alternatives": []
+}
