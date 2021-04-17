@@ -585,121 +585,44 @@ aprilAVG <- summarySG(aprilHourly)
 aprilHourly <- left_join(aprilHourly, aprilAVG, by = c("timestamp", "hour", "day"), keep=F)
 
 
-compareSensors1 <- function(data, type = c('a', 'b'), new){
-  #-------------------------------------------------------------------------------------#
-  if (new == FALSE){
-    sensors <- unique(data[,c('longitude','latitude')])
-    sensors <- dplyr::mutate(sensors,
-                             names = dplyr::case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-                                                      longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-                                                      longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-                                                      longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-                                                      longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-                                                      longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-                                                      longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-                                                      longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-                                                      longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-                                                      longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-                                                      longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
-    )
+highslows1 <- function(data) {
+  
+  sensors <- unique(data[,c('longitude','latitude')])
+  
+  sensorNum <- nrow(sensors)
+  
+  hi_lo <- data.frame()
+  
+  for (i in 1:sensorNum) {
+    high <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                      data = data[data$longitude == sensors[i,1],], max)
     
-    sensorNum <- nrow(sensors)
+    nhighs <- nrow(high)
+    type <- c(type = rep(c("high"), nhighs))
+    high$type <- type
+    
+    low <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                     data = data[data$longitude == sensors[i,1], ], min)
+    
+    nvals <- nrow(low)
+    type <- c(type = rep(c("low"), nvals))
+    low$type <- type
+    
+    hi_lo <- rbind(hi_lo,high,low)
   }
+  names(hi_lo)[1] <- "date"
+  hi_lo$day <- lubridate::mday(hi_lo$date)
   
-  else{
-    sensors <- unique(data[,c("longitude","latitude","names")])
-    sensorNum <- length(unique(data$names))
-  }
-  #-------------------------------------------------------------------------------------#
+  hi_lo <- dplyr::left_join(hi_lo, data, by = c("PM2.5", "day","latitude","longitude"), keep= F)
   
-  num_readings <- aggregate(PM2.5 ~ names, data, FUN=length )
-  colnames(num_readings) <- c('names', 'total_readings')
+  hi_lo <- hi_lo[order(hi_lo$date),]
   
-  #the percent breaks
-  bks <- c(0,15,50,100, 200, Inf)
-  end <- length(bks)
+  hi_lo <- hi_lo[!duplicated(hi_lo[,c("date","PM2.5","type","names")]),]
   
-  #initialize the data frame
-  pct_diffs <- data.frame(matrix(0L, ncol = 6, nrow = sensorNum ))
-  
-  names(pct_diffs) <- c("names", "0-15%", "15%-50%", "50%-100%", "100%-200%", "above_200%")
-  pct_diffs$names <- sensors$names
- 
-  
-  #change less than or equal to back to just less than once you check the thing
-  if (type == "a"){
-    readings_over <- aggregate(PM2.5 ~ names,
-                               data = data[data$PM2.5> data$median_PM2.5,], FUN=length )
-    colnames(readings_over) <- c("names", "count")
-    
-    #add longitude and latitude, for mapping
-    readings_over <- dplyr::left_join(readings_over, sensors, by= "names")
-    #add the total number of readings
-    readings_over <- dplyr::left_join(readings_over, num_readings, by= "names")
-    
-    #create the pct difference values on which to separate by
-    readings <- dplyr::filter(data, PM2.5> median_PM2.5)
-    readings$pct_over <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
-    
-    x<-1
-    #counting each instance of readings under the median by percentage bin
-    while (!plyr::empty(readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],])){
-      u <- aggregate(PM2.5 ~ names,
-                     data = readings[readings$pct_over>=bks[x] & readings$pct_over<=bks[x+1],], FUN = length)
-      
-      index <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
-      
-      pct_diffs[,x+1] <- index[,7]
-      x <- x+1
-    }
-    
-    #aggregate doesn't count nonpresent sensors, so replace the NA values with 0's
-    pct_diffs[is.na(pct_diffs)] <- 0
-    
-    readings_over <- dplyr::left_join(readings_over, pct_diffs, by = "names", keep=F)
-    
-    readings_over
-  }
-  else{
-    readings_under <- aggregate(PM2.5 ~ names,
-                                data = data[data$PM2.5< data$median_PM2.5,], FUN=length )
-    colnames(readings_under) <- c("names", "count")
-    
-    #add longitude and latitude, for mapping
-    readings_under <- dplyr::left_join(readings_under, sensors, by= "names")
-    #add the total number of readings
-    readings_under <- dplyr::left_join(readings_under, num_readings, by= "names")
-    
-    #create the pct difference values on which to separate by
-    readings <- dplyr::filter(data, PM2.5< median_PM2.5)
-    readings$pct_under <- (abs(readings$PM2.5 - readings$median_PM2.5)/readings$median_PM2.5)*100
-    
-    pct_names <- c("0-15%", "15%-50%", "50%-100%", "100%-200%", "above_200%")
-    
-    x<-1
-    #counting each instance of readings under the median by percentage bin
-    while (!plyr::empty(readings[readings$pct_under>=bks[x] & readings$pct_under<=bks[x+1],])){
-      u <- aggregate(PM2.5 ~ names,
-                     data = readings[readings$pct_under>=bks[x] & readings$pct_under<=bks[x+1],], FUN = length)
-      
-      index <- dplyr::left_join(pct_diffs, u, by ="names", keep=F)
-      
-      pct_diffs[,x+1] <- index[,7]
-      x <- x+1
-    }
-    
-    #aggregate doesn't count nonpresent sensors, so replace the NA values with 0's
-    pct_diffs[is.na(pct_diffs)] <- 0
-    
-    readings_under <- dplyr::left_join(readings_under, pct_diffs, by = "names", keep=F)
-    
-    readings_under
-  }
-  
+  hi_lo
 }
 
-compareSensors1(aprilHourly,"b", TRUE)
-
+highslows1(aprilHourly)
 
 
 #--------------------------------------------------------

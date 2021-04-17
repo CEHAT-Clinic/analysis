@@ -113,7 +113,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              p("75% of the PM2.5 readings lie below", verbatimTextOutput("percentiles5")),
                                              p("95% of the PM2.5 readings lie below", verbatimTextOutput("percentiles6")),
                                              br(),
-                                             h4("Second Max for 24-hour PM2.5:",  verbatimTextOutput("secondMax")),
+                                             h4("PM2.5 Second Max for 24-hour period:",  verbatimTextOutput("secondMax")),
 
                                              br(),
                                              h4("For the given PurpleAir Data"),

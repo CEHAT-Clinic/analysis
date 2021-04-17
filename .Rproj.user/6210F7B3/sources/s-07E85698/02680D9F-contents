@@ -1,0 +1,257 @@
+---
+pdf_document: default
+author: "Lotenna Nwobbi"
+title: "HW8"
+output:
+  pdf_document: default
+keep_tex: yes
+latex_engine: pdflatex
+template: ' theme / article-template.tex '
+fontsize: 12 pt
+fig_caption: yes
+---
+
+## Question 1
+
+\textbf{[6.25]} Simulate an AR(1) time series of length $n = 36$ with $\phi = 0.7$. 
+\begin{enumerate}
+\item[(a)] Calculate and plot the theoretical autocorrelation function for this model. Plot sufficient lags until the correlations are negligible.
+\item[(b)] Calculate and plot the sample ACF for your simulated series. How well do the values and patterns match the theoretical ACF from part (a)?
+\item[(c)] What are the theoretical partial autocorrelations for this model?
+\item[(d)] Calculate and plot the sample ACF for your simulated series. How well do the values and patterns match the theoretical ACF from part (a)? Use the large-sample standard errors reported in Exhibit 6.1 on page 111, to quantify your answer.
+\item[(e)] Calculate and plot the sample PACF for your simulated series. How well do the values and patterns match the theoretical PACF from part (c)? Use the large-sample standard errors reported on page 115 to quantify your answer.
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+```{r q1}
+library(TSA)
+m1 = arima.sim(n = 36, list(ar = 0.70))
+data(ar1.s)
+
+#part A
+tacf1 <- ARMAacf(ar = 0.7, lag.max = 36)
+plot(tacf1, type="h", xlab="lag", ylab="Theoretical ACF")
+
+#part B
+TSA::acf(m1, lag.max = 36)
+
+    # This plot obtains negative values, whereas
+    # the theoretical one from (a) does not. However,
+    # the magnitude of the ACF seems to decay for both.
+
+#part C
+
+tacf1P <- ARMAacf(ar = 0.7, lag.max = 36, pacf=TRUE)
+print(tacf1P)
+plot(tacf1P, type="h", xlab="lag", ylab="Theoretical Partial ACF")
+
+#part D
+  # The plot only seems to attain negative values when the
+  # theoretical values are close to 0. Otherwise, the sample 
+  # and the theoretical ACF seem to agree with each other. We 
+  # can verify this by looking at lag 10, which, according to 
+  # Exhibit 6.1 should be within 2(1.7/6) = .5666 of the theoretical 
+  # value. Lag 10 is definitely within that.
+
+#part E
+TSA::acf(m1, lag.max = 36, type="partial")
+
+```
+\begin{enumerate}
+\item[(e.)] Using the error margin $\pm 2/\sqrt{n} \rightarrow (-\frac13,\frac13)$ (which is also specificed by the plot), the simulated values fare well against the theoretical values, as all but one of the PACF values (at lag 10) are within the error margin that is centered at 0.
+\end{enumerate}
+
+
+\eject
+
+
+## Question 2
+
+\textbf{[6.29]} Simulate a mixed ARMA(1,1) model of length $n = 60$ with $\phi = 0.4$ and $\theta = 0.6$. 
+\begin{enumerate}
+\item[(a)] Calculate and plot the theoretical autocorrelation function for this model. Plot sufficient lags until the correlations are negligible.
+\item[(b)] Calculate and plot the sample ACF for your simulated series. How well do the values and patterns match the theoretical ACF from part (a)?
+\item[(c)] Calculate and interpret the sample EACF for this series. Does the EACF help you specify the correct orders for the model?
+\item[(d)] Repeat parts (b) and (c) with a new simulation using the same parameter values and sample size.
+\item[(e)] Repeat parts (b) and (c) with a new simulation using the same parameter values but sample size $n = 36$.
+\item[(f)] Repeat parts (b) and (c) with a new simulation using the same parameter values but sample size $n=120$.
+\end{enumerate}
+
+\noindent\rule{165mm}{0.4pt}
+
+
+
+```{r q2}
+m2 = arima.sim(n = 60, list(ar = 0.4, ma = 0.60))
+data(arma11.s)
+
+#part A
+tacf2 <- ARMAacf(ar = c(0.4), ma = c(0.60), lag.max = 60)
+plot(tacf2, type="h", xlab="lag", ylab="Theoretical ACF")
+
+#part B
+acf(m2, lag.max = 100)
+
+    # This plot obtains negative values, whereas
+    # the theoretical one from (a) does not.
+    
+
+#part C
+eacf(m2)
+
+    # The order specified by the EACF is ARMA(1,1)
+    # which matches our model!
+
+#part D
+m2.1 = arima.sim(n = 60, list(ar = 0.4, ma = 0.60))
+acf(m2.1, lag.max = 100)
+eacf(m2.1)
+
+    # This EACF seems to suggests ARMA(1,2), which is
+    # not quite right.
+
+#part E
+m2.2 = arima.sim(n = 36, list(ar = 0.4, ma = 0.60))
+acf(m2.2, lag.max = 100)
+eacf(m2.2, ar.max = 4, ma.max = 8)
+
+    # This EACF incorrectly suggests MA(1)
+
+#part F
+m2.3 = arima.sim(n = 120, list(ar = 0.4, ma = 0.60))
+acf(m2.3, lag.max = 100)
+eacf(m2.3)
+
+    # This EACF is less clear. It seems to suggest 
+    # ARMA(2,1), assuming that there are false 
+    # positives at larger orders.
+
+```
+
+
+
+\eject
+
+## Question 3
+
+\textbf{[6.36]} The data file named robot contains a time series obtained from an industrial robot. The robot was put through a sequence of maneuvers, and the distance from a desired ending point was recorded in inches. This was repeated 324 times to form the time series.
+\begin{enumerate}
+\item[(a)] Display  the  time  series  plot  of  the  data.  Based  on  this  information,  do  these data appear to come from a stationary or nonstationary process?
+\item[(b)] Calculate  and  plot  the  sample  ACF  and  PACF  for  these  data.  Based  on  this additional information, do these data appear to come from a stationary or non-stationary process?
+\item[(c)] Calculate and interpret the sample EACF.
+\item[(d)] Use the best subsets ARMA approach to specify a model for these data. Compare these results with what you discovered in parts (a), (b), and (c).
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+
+```{r q3}
+data(robot)
+
+#part A
+plot(robot)
+# The data appears to be largely stationary, but there are 
+# parts of the data appear to hang together in ways that 
+# suggest moving average.
+
+#part B
+TSA::acf(robot)
+TSA::acf(robot, type = "partial")
+
+# The data appears to be nonstationary. The peaks seems to
+# trail off periodically, and remain above the acceptable 
+# error range.
+
+#part C
+eacf(robot)
+
+# The EACF suggests that the data fits neatly into an ARMA(1,1) model.
+
+#part D
+
+subs<-armasubsets(y=robot,nar=14,nma=14,y.name='robot', ar.method='ols')
+plot(subs)
+
+# The best subsets approach suggests that the best subset ARMA model has 
+# one autoregressive term at 1 lag and two error terms at lags 3 and 12.
+# The presence of the lag 12 error term seems to suggest seasonality 
+# (indicated in part b), which is further supported by the next best 
+# model also including an autoregressive term at lag 12. The best 
+# subsets approach also supports the findings from the EACF, though 
+# less directly.
+
+
+
+```
+
+
+
+
+
+
+\eject
+
+## Question 4
+
+\textbf{[6.38]} Calculate and interpret the sample EACF for the color property time series. The data are in the color file. Does the sample EACF suggest the same model that was specified by looking at the sample PACF?
+\noindent\rule{165mm}{0.4pt}
+
+
+```{r q4}
+data(color)
+
+
+TSA::acf(color,type="partial", ylab="Partial ACF")
+
+eacf(color, ar.max = 4, ma.max = 8)
+
+
+# The EACF mostly suggests an AR(1) model, while the PACF 
+# seems to disagree, as the PACF does not cut off like we would 
+# expect in an AR model's PACF.
+```
+
+
+
+
+\eject
+
+## Question 5
+
+\textbf{[10.2]} An AR model has AR characteristic polynomial 
+\[ (1-1.6x+0.7x^2)(1-0.8x^{12}) \]
+\begin{enumerate}
+\item[(a)] Is the model stationary?
+\item[(b)] Identify the model as a certain seasonal ARIMA model.
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+\begin{enumerate}
+\item[(a)] This model is not stationary because $|\Phi | <1$ and $|\phi_1+\phi_2| <1$. Thus, the two AR models are stationary individually, which is a property that is preserved when the two models are multiplied together.
+\item[(b)] $AR(2) \times AR(1)_{12}$ with $\phi_1=1.6$, $\phi_2 =-0.7$, and $\Phi = 0.8$.
+\end{enumerate}
+
+
+
+
+\eject
+## Question 6
+
+\textbf{[10.5]} Identify the following as certain multiplicative seasonal ARIMA models:
+\begin{enumerate}
+\item[(a)] $Y_t = 0.5Y_{t-1} + Y_{t-4} - 0.5Y_{t-5} + e_t -0.3e_{t-1}$
+\item[(b)] $Y_t = Y_{t-1} + Y_{t-12} - Y_{t-13} + e_t -0.5e_{t-1}-0.5e_{t-12}+0.25e_{t-13}$
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+\begin{enumerate}
+\item[(a)] This corresponds to the following characteristic polynomials: 
+        \[ (1-0.5B)(1-B^4)Y_t = (1-0.3B)e_t      \]
+        which indicates that $Y_t$ is an $ARMA(1,1) \times I(1)_{4}$ with $\phi=0.5$, $\Phi =1$, and $\theta = 0.3$.
+\item[(b)] This corresponds to the following characteristic polynomials: 
+        \[ (1-B)(1-B^{12})Y_t = (1-0.5B)(1-0.5B^{12})e_t      \]
+        which indicates that $Y_t$ is an $IMA(1,1) \times IMA(1,1)_{12}$ with $\theta =0.5$ and $\Theta = 0.5$.
+\end{enumerate}
+
+
