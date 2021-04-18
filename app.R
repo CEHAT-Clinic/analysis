@@ -53,13 +53,10 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                               "text/comma-separated-values,text/plain",
                                                               ".csv")),
 
-<<<<<<< HEAD
-                                         radioButtons("answer", label = "Was this data downloaded after April 2nd, 2021?",
-                                                      choices = list("No" = "N", "Yes" = "Y")),
-=======
+
                                          radioButtons("answer", label = "Was this data downloaded after March 30, 2021?",
                                                       choices = list("Yes" = "Y", "No" = "N")),
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
+
                                          br(),
                                          br(),
                                          p(strong("Confirm which sensors you'd like to include.")),
@@ -669,13 +666,9 @@ server <- function(input, output) {
             geom_segment(aes(x=day, xend=day, y=min,yend=max),lwd=1)+
             geom_point(aes(y=max, col="high"), size=5) +
             geom_point(aes(y=min, col="low"), size=5)+
-<<<<<<< HEAD
-            labs(x = 'Day', y = 'PM25') +
-=======
             geom_hline(aes(yintercept = HighAverage), color="#C93312", linetype="dashed")+
             geom_hline(aes(yintercept = LowAverage), color="#899DA4", linetype="dashed")+
             labs(x = 'Day', y = 'PM2.5 (μg/m3)') +
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
             scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +
             ggtitle("Daily Highs and Lows") +
             theme_minimal()
@@ -698,9 +691,8 @@ server <- function(input, output) {
                                                  lubridate::date(avgSG$timestamp) <= toString(dates[2]),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-<<<<<<< HEAD
-        plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values")
-=======
+
+
         #creating a dynamic scale for the plot
         min1 <- min(diurnalR)
         min2 <- min(addDiurnal)
@@ -709,7 +701,7 @@ server <- function(input, output) {
         max2 <- max(addDiurnal)
 
         plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values", xlab="Hour", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
+
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -728,9 +720,7 @@ server <- function(input, output) {
                                                  lubridate::date(avgSG$timestamp) <= toString(dates[2]),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-<<<<<<< HEAD
-        plot(diurnalR, type="o", lwd=1.5, main = "Max PM2.5")
-=======
+
         #creating a dynamic scale for the plot
         min1 <- min(diurnalR)
         min2 <- min(addDiurnal)
@@ -739,7 +729,6 @@ server <- function(input, output) {
         max2 <- max(addDiurnal)
 
         plot(diurnalR,type="o", lwd=1.5, main = "Peak PM2.5 Values", ylab="PM2.5 (μg/m3)", xlab="Hour", ylim=c(min(min1,min2), max(max1,max2)))
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
         lines(addDiurnal, type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -758,9 +747,6 @@ server <- function(input, output) {
                                                  as.Date(avgSG$timestamp, tz = "America/Los_Angeles") <= as.Date(dates[2], tz = "America/Los_Angeles"),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-<<<<<<< HEAD
-        plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5")
-=======
         #creating a dynamic scale for the plot
         min1 <- min(diurnalR)
         min2 <- min(addDiurnal)
@@ -769,7 +755,6 @@ server <- function(input, output) {
         max2 <- max(addDiurnal)
 
         plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5 Values", ylab="PM2.5 (μg/m3)", xlab = "Hour", ylim=c(min(min1,min2), max(max1,max2)))
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -1259,17 +1244,10 @@ server <- function(input, output) {
             geom_point(data=PAhi_lo[PAhi_lo$type == "high"  & PAhi_lo$names == input$sensor, ],
                        aes(x=date, y=PM2.5, group = type, col="high"), size=5)+
             geom_point(data=PAhi_lo[PAhi_lo$type == "low" & PAhi_lo$names == input$sensor, ],
-<<<<<<< HEAD
-                       aes(x=day, y=PM2.5, group = type, col="low"), size=5)+
-            scale_color_brewer(palette="Dark2")+
-            labs(x = 'Day', y = 'PM25') +
-            scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +    scale_fill_manual(name="Type",values=wessy_pal) +
-=======
                        aes(x=date, y=PM2.5, group = type, col="low"), size=5)+
             labs(x = 'Day', y = 'PM2.5 (μg/m3)') +
             scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +
             scale_fill_manual(name="Type",values=wessy_pal) +
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
             ggtitle(input$sensor) +
             theme_minimal()
 
@@ -1424,27 +1402,22 @@ server <- function(input, output) {
 
     output$prediction <- renderPlotly({
         req(input$date1)
-
-        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
-
+        
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        
         if(length(input$sensorSel) >= 5){
-            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
-
-<<<<<<< HEAD
-            autoPlot <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.pred), alpha=0.90) +
-                geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping =aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
-=======
+            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)+ lubridate::hours(input$hour)))
+            
             names(autoDF)["var1.pred"] <- "predicted"
-
+            
             autoPlot <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=prediction), alpha=0.90) +
                 geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping = aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
->>>>>>> 9533922b6efea43f4b25b9a0bea4407cb120e47f
                 coord_equal() +
                 scale_fill_continuous(type = "viridis") +
                 labs(x = "longitude", y="latitude")+
                 theme_bw() +
                 ggtitle("Ordinary Kriging PM2.5 Predictions")
-
+            
             ggplotly(autoPlot)
         }
         else{
