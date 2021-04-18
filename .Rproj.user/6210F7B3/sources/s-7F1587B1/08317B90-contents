@@ -1,0 +1,77 @@
+library(shiny)
+library(openair)
+library(ggplot2)
+library(readr)
+
+
+ui <- fluidPage(
+    titlePanel("title"),
+    
+    sidebarLayout(
+        sidebarPanel(
+            selectInput("df","Choose a Site:",
+                        choices = c(
+                            "Site A" = 'SiteA',
+                            "Site B" = 'SiteB')
+            ),
+            uiOutput("dateRange")
+            
+            
+        ),
+        mainPanel(
+            strong(paste("Frequency Distribution:")),
+            plotOutput("hist")
+        )       
+    )
+)
+
+server <- function(input, output, session) {
+    df <- reactive({
+        if(input$df == "SiteA"){
+            date<- c("2017-01-01","2017-01-02","2017-01-03","2017-01-04")
+            ws<-c(rep(0:3,1))
+            SiteA <- data.frame(date,ws,stringsAsFactors = FALSE)
+            x <- SiteA
+        }
+        if(input$df == "SiteB"){
+            date<- c("2017-01-01","2017-01-02","2017-01-03",
+                     "2017-01-04","2017-01-05", "2017-01-06")
+            ws<-c(rep(0:5,1))
+            SiteB <- data.frame(date,ws,stringsAsFactors = FALSE)
+            x <- SiteB
+        }
+        return(x)
+    })
+    
+    
+    
+    output$dateRange <- renderUI({
+        dateRangeInput("date", "Select the date range:",
+                       start = 
+                           as.character(format(as.Date(min(df()$date))),"yyyy-mm-dd"), # Start 
+                       end = 
+                           as.character(format(as.Date(max(df()$date))),"yyyy-mm-dd"), # End 
+                       min = 
+                           as.character(format(as.Date(min(df()$date))),"yyyy-mm-dd"),
+                       max = 
+                           as.character(format(as.Date(max(df()$date))),"yyyy-mm-dd"),
+                       format = "yyyy-mm-dd")
+        
+    })
+    
+    
+    
+    output$hist <- renderPlot({
+        df <- df() # df is the user selected dataset
+        dfhist<- subset(df, date >= as.Date(input$date[1]) & date <= 
+                            as.Date(input$date[2]) )
+        ggplot(dfhist, aes(dfhist$ws)) +
+            geom_histogram(fill = "blue", bins = 50) +
+            labs(x="Wind Speed (m/s)", y="Count")
+        
+    })
+    
+    
+}
+
+shinyApp(ui = ui, server = server)
