@@ -52,7 +52,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                                               ".csv")),
 
                                          radioButtons("answer", label = "Was this data downloaded after April 2nd, 2021?",
-                                                      choices = list("Yes" = "Y", "No" = "N")),
+                                                      choices = list("No" = "N", "Yes" = "Y")),
                                          br(),
                                          br(),
                                          p(strong("Confirm which sensors you'd like to include.")),
@@ -236,8 +236,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                 tabPanel("Interpolation and Sensor Placement",
                                          sidebarPanel(
 
-                                             uiOutput("date1"),
-                                             uiOutput("hour")
+                                             uiOutput("date1")
 
                                          ),
 
@@ -281,7 +280,7 @@ server <- function(input, output) {
 
     output$sensorSel_HL <- renderUI({
         req(input$file1)
-        sensors <- sensorsList()
+        sensors <- sensors()
 
         selectInput("sensor", label = "Select sensor:",
                     choices = sensors$names, selected = sensors$names[1])
@@ -389,18 +388,9 @@ server <- function(input, output) {
     })
 
 
-    output$hour <- renderUI({
-        req(input$file1)
-
-        sliderInput("hour", label = strong("Choose hour"), min = 0,
-                    max = 24, value = 0 )
-
-    })
-
-
-    ################################################################################################
+    ##############################################
     # DEFINING REACTIVE OBJECTS
-    ################################################################################################
+    ##############################################
 
     PAfull <- reactive({
         req(input$file1)
@@ -420,7 +410,9 @@ server <- function(input, output) {
     newPAfull <- reactive({
         req(input$file1)
 
-        messyPA <- read.csv(input$file1$datapath, quote= '"')
+        messyPA <- read.csv(input$file1$datapath#,
+                            #quote= '"'
+        )
         PAfull <- PurpleAirCEHAT::newCleanPA(messyPA)
 
         return(PAfull)
@@ -428,34 +420,28 @@ server <- function(input, output) {
 
     sensors <- reactive({
         req(input$file1)
-
-        if(input$answer == "Y" ){
-            sensors <- unique(newPAfull()$names)
-            sensors <- data.frame(names=sensors)}
-
-        else if (input$answer == "N"){
-            sensors <- unique(PAfull()[,c("longitude","latitude")])
-            #adding the names of 11 sensors
-            #to add another sensor, end the previous line with a comma, and input the following info for the new sensor:
-            #     longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-            #     longitude == <longitude> & latitude == <latitude> ~ "<name>")
+        
+        
+        sensors <- unique(PAfull()[,c("longitude","latitude")])
+        #adding the names of 11 sensors
+        #to add another sensor, end the previous line with a comma, and input the following info for the new sensor:
+        #     longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+        #     longitude == <longitude> & latitude == <latitude> ~ "<name>")
 
 
-            sensors <- dplyr::mutate(sensors,
-                                     names = case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
-                                                       longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
-                                                       longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
-                                                       longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
-                                                       longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
-                                                       longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
-                                                       longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
-                                                       longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
-                                                       longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
-                                                       longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
-                                                       longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
-            )}
-
-
+        sensors <- dplyr::mutate(sensors,
+                                 names = case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                                   longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                                   longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                                   longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                                   longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                                   longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                                   longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                                   longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                                   longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                                   longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                                   longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+        )
 
         return(sensors)
     })
@@ -484,17 +470,17 @@ server <- function(input, output) {
 
         if(input$answer == "Y" ){
             PAfull <- newPAfull()
-            PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, TRUE)
-            PAhourly <- PAhourly[PAhourly$PM2.5 <= mean(PAhourly$PM2.5)*20,]}
+            PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, TRUE) }
 
         else if (input$answer == "N"){
             PAfull <- PAfull()
-            PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, FALSE)
-            PAhourly <- PAhourly[PAhourly$PM2.5 <= mean(PAhourly$PM2.5)*20,]}
+            PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, FALSE) }
 
 
         PAhourly %>%
             dplyr::filter(names %in% sensors$names)
+
+        PAhourly[PAhourly$PM2.5 <= mean(PAhourly$PM2.5)*20,]
 
         #return(PAhourly)
     })
@@ -601,11 +587,9 @@ server <- function(input, output) {
     })
 
 
-    ##################################################################################################
+    ##############################################
     # RENDERING PLOTS, TEXT, and TABLES
-    ##################################################################################################
-
-
+    ##############################################
 
     output$maxHour <- renderText({
         req(input$file1)
@@ -630,7 +614,7 @@ server <- function(input, output) {
             geom_segment(aes(x=day, xend=day, y=min,yend=max),lwd=1)+
             geom_point(aes(y=max, col="high"), size=5) +
             geom_point(aes(y=min, col="low"), size=5)+
-            labs(x = 'Day', y = 'PM2.5 (μg/m3)') +
+            labs(x = 'Day', y = 'PM25') +
             scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +
             ggtitle("Daily Highs and Lows") +
             theme_minimal()
@@ -653,14 +637,7 @@ server <- function(input, output) {
                                                  lubridate::date(avgSG$timestamp) <= toString(dates[2]),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-        #creating a dynamic scale for the plot
-        min1 <- min(diurnalR)
-        min2 <- min(addDiurnal)
-
-        max1 <- max(diurnalR)
-        max2 <- max(addDiurnal)
-
-        plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values")
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -679,14 +656,7 @@ server <- function(input, output) {
                                                  lubridate::date(avgSG$timestamp) <= toString(dates[2]),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-        #creating a dynamic scale for the plot
-        min1 <- min(diurnalR)
-        min2 <- min(addDiurnal)
-
-        max1 <- max(diurnalR)
-        max2 <- max(addDiurnal)
-
-        plot(diurnalR,type="o", lwd=1.5, main = "Peak PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR, type="o", lwd=1.5, main = "Max PM2.5")
         lines(addDiurnal, type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -704,14 +674,7 @@ server <- function(input, output) {
                                                  lubridate::date(avgSG$timestamp) <= toString(dates[2]),],
                                 FUN= function(x) {round(mean(x),2)} )
 
-        #creating a dynamic scale for the plot
-        min1 <- min(diurnalR)
-        min2 <- min(addDiurnal)
-
-        max1 <- max(diurnalR)
-        max2 <- max(addDiurnal)
-
-        plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5")
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -728,7 +691,7 @@ server <- function(input, output) {
         historical <- ggplot(avgSG[avgSG$day <= as.Date(input$date3) & avgSG$day >= as.Date(input$date3)-lubridate::days(30),], aes(x=day,y=average_PM2.5, group=category))+
             geom_hline(aes(yintercept = Average), color="blue", linetype="dashed")+
             geom_col(aes(fill=category),col=1, lwd=0.5)+
-            labs(x = "Day", y = "PM2.5 (μg/m3)") +
+            labs(x = "Day", y = "PM2.5") +
             ggtitle("Daily Average PM2.5")+
             theme_minimal()+
             scale_fill_discrete(type=EPAcols)+
@@ -750,7 +713,7 @@ server <- function(input, output) {
             geom_hline(aes(yintercept = Average), color="blue", linetype="dashed")+
             geom_col(aes(fill=category),col=1, lwd=0.5)+
             #stat_summary(aes(y=average_PM2.5), fun=mean, geom="line", colour="green")+
-            labs(x = "Day", y = "PM2.5 (μg/m3)") +
+            labs(x = "Day", y = "PM2.5") +
             ggtitle("Hourly Average PM2.5")+
             theme_minimal()+
             scale_fill_discrete(type=EPAcols)+
@@ -768,7 +731,7 @@ server <- function(input, output) {
         EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
 
         print(ggplot(PAhourly[PAhourly$names == input$sensor,], aes(x=category, group=category)) +
-                  geom_histogram(aes(y=after_stat(count/nrow(PAhourly[PAhourly$names == input$sensor,])), fill=category), stat="count", lwd=0.5, col="black")+
+                  geom_histogram(aes(y=after_stat(count/nrow(PAhourly[PAhourly$names == input$sensor,])), color=category, fill=category), stat="count", lwd=0.5, col="black")+
                   labs(x = "Sensors", y = "Count") +
                   ggtitle(paste("Category of Readings for", input$sensor)) +
                   theme_minimal()+
@@ -787,7 +750,7 @@ server <- function(input, output) {
         EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
 
         plot <- ggplot(PAhourly, aes(x=names, group=category)) +
-            geom_histogram(aes(y=after_stat(count), fill=category), position = position_stack(reverse = TRUE), stat="count", lwd=0.5, col="black")+
+            geom_histogram(aes(y=after_stat(count), color=category, fill=category), position = position_stack(reverse = TRUE), stat="count", lwd=0.5, col="black")+
             labs(x = "Sensors", y = "Count") +
             ggtitle("Category of Readings by Sensor")+
             theme_minimal()+
@@ -1157,7 +1120,7 @@ server <- function(input, output) {
             geom_point(data=PAhi_lo[PAhi_lo$type == "low" & PAhi_lo$names == input$sensor, ],
                        aes(x=day, y=PM2.5, group = type, col="low"), size=5)+
             scale_color_brewer(palette="Dark2")+
-            labs(x = 'Day', y = 'PM2.5 (μg/m3)') +
+            labs(x = 'Day', y = 'PM25') +
             scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +    scale_fill_manual(name="Type",values=wessy_pal) +
             ggtitle(input$sensor) +
             theme_minimal()
@@ -1264,7 +1227,7 @@ server <- function(input, output) {
         stacked <- ggplot(PurpleAirCEHAT::compareDataDF(matchingDays,nameOfCity), aes(fill=city, y=PM2.5, x=day)) +
             geom_bar(position="dodge", stat="identity") +
             geom_col(width = 0.7, position = position_dodge(0.9)) +
-            ggtitle("Bar Chart of PM2.5 Readings")
+            ggtitle("Bar Chart of PM2.5 values")
 
         ggplotly(stacked)
     })
@@ -1302,13 +1265,13 @@ server <- function(input, output) {
     output$prediction <- renderPlotly({
         req(input$date1)
 
-        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
 
         if(length(input$sensorSel) >= 5){
-            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)+ lubridate::hours(input$hour)))
+            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
 
             autoPlot <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.pred), alpha=0.90) +
-                geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping = aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
+                geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping =aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
                 coord_equal() +
                 scale_fill_continuous(type = "viridis") +
                 labs(x = "longitude", y="latitude")+
@@ -1326,10 +1289,10 @@ server <- function(input, output) {
     output$variance <- renderPlotly({
         req(input$date1)
 
-        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
 
         if(length(input$sensorSel) >= 5){
-            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)+ lubridate::hours(input$hour)))
+            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
 
             autoVars <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.var), alpha=0.90) +
                 geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping =aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
@@ -1351,10 +1314,10 @@ server <- function(input, output) {
     output$stdev <- renderPlotly({
         req(input$date1)
 
-        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1))
 
         if(length(input$sensorSel) >= 5){
-            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)+ lubridate::hours(input$hour)))
+            autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)))
 
             autoStDev <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.stdev), alpha=0.90) +
                 geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21 , mapping =aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
