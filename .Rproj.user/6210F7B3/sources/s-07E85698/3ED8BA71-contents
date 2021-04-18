@@ -1,0 +1,1003 @@
+library(gstat)
+library(sp)
+library(spacetime)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(geoR)
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(tigris)
+library(raster)
+library(readxl)
+library(fields)
+library(dismo)
+library(lubridate)
+library(automap)
+library(wesanderson)
+names(wes_palettes)
+
+devtools::install('PurpleAirCEHAT')
+library(PurpleAirCEHAT)
+ 
+# Required for melt() and cast() function 
+library(reshape2) 
+library(reshape) 
+
+#bringing in map of South Gate as a grid. This will be our estimation grid.
+proj <-CRS("+proj=utm +zone=19 +ellps=WGS84 +datum=WGS84")
+
+cities <- places(state = "CA", cb = TRUE, year=2019)
+sg <- dplyr::filter(cities, NAME == "South Gate")
+
+sg.city <- as(sg, "Spatial")
+sg.city <- sp::spTransform(sg.city, CRSobj = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+long.range <- as.numeric(range(sg.city@bbox[1,]))
+lat.range <- as.numeric(range(sg.city@bbox[2,]))
+
+test.grid <- expand.grid(x = seq(from = long.range[1], to = long.range[2], by = .005), y = seq(from = lat.range[1], to = lat.range[2], by = .005))
+
+
+sg.grid <- SpatialPoints(test.grid, proj4string = CRS(proj4string(sg.city)))
+
+sg.grid <- SpatialPixels(sg.grid[sg.city,])
+
+
+
+
+sg.city <- southgate()
+
+sg.grid <- southgate_grid()
+
+
+#coverting the city into a data frame to work with ggplot
+
+# add to data a new column termed "id" composed of the rownames of data
+sg.city@data$id <- rownames(sg.city@data)
+
+# create a data.frame from our spatial object
+sg.cityPoints <- fortify(sg.city, region = "id")
+
+# merge the "fortified" data with the data from our spatial object
+sg.cityDF <- left_join(sg.cityPoints, sg.city@data, by = "id")
+
+# NOTE : If we so choose, we could have loaded the plyr library to use the
+#      : join() function. For those familiar with SQL, this may be a more
+#      : intuitive way to understand the merging of two data.frames. An
+#      : equivalent SQL statement might look something like this:
+#      : SELECT *
+#      : FROM dataProjected@data
+#      : INNER JOIN watershedPoints
+#      : ON dataProjected@data$id = watershedPoints$id
+
+# library(plyr)
+# watershedDF <- join(watershedPoints, dataProjected@data, by = "id")
+#---------------------------------------------------
+
+
+
+#PAavgs <- read.csv("C:/Users/jimzi/Downloads/hour_averages_2020_11_06T05_19_10_089Z.csv")
+
+#October-November
+#PAfull <- read.csv("C:/Users/jimzi/Downloads/pm_readings_20201029T200746984Z.csv")
+
+#Decemeber
+
+sensors <- unique(PAfull[,c("longitude","latitude")])
+
+#adding the names supposing there are 11 sensors
+#to add another sensor, end the previous line with a comma, and input the following info for the new sensor:
+#     longitude == <longitude> & latitude == <latitude> ~ "<name>")
+
+sensors <- mutate(sensors,
+                  names = case_when(longitude == -118.1901 & latitude == 33.94106 ~ "Sensor: SCSG-14",
+                                    longitude == -118.1953 & latitude == 33.94354 ~ "Sensor: CEHAT 7-CD",
+                                    longitude == -118.2201 & latitude == 33.94178 ~ "Sensor: CEHAT-01",
+                                    longitude == -118.1985 & latitude == 33.96063 ~ "Sensor: CEHAT 5",
+                                    longitude == -118.2184 & latitude == 33.96757 ~ "Sensor: CCA Mountainview and Olive",
+                                    longitude == -118.2146 & latitude == 33.95058 ~ "Sensor: CEHAT-St. Helens-STEM",
+                                    longitude == -118.1685 & latitude == 33.93553 ~ "Sensor: SCSG_15",
+                                    longitude == -118.1673 & latitude == 33.92019 ~ "Sensor: SCSG_20",
+                                    longitude == -118.2225 & latitude == 33.95094 ~ "Sensor: CEHAT 7-SE",
+                                    longitude == -118.1965 & latitude == 33.93868 ~ "Sensor: CEHAT 8",
+                                    longitude == -118.2181 & latitude == 33.96192 ~ "Sensor: CEHAT 3")
+)
+
+
+locations <- sensors
+
+coordinates(locations) <- c("longitude", "latitude")
+proj4string(locations) <- CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84") # WGS 84
+CRS.new <- CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84")
+
+locations <- spTransform(locations, CRS.new)
+
+#--------------------------------------------------------
+
+PAfull <- read.csv("C:/Users/jimzi/Downloads/pm25_2020_12_01T07_59_59_000Z_to_2021_01_01T08_00_00_000Z.csv")
+
+PAfull <- PurpleAirCEHAT::cleanPA(PAfull)
+
+PAhourly <- PurpleAirCEHAT::hourlyPA(PAfull, FALSE)
+
+PAhi_lo <- PurpleAirCEHAT::highslows(PAhourly)
+#------------------------------------------------------------------------------------------------------------------
+#Summary Statistics:
+# how many times a given day is above EPA threshold
+# the average high value
+# what time of day does the peak occur?
+# the average low value
+# what time of day the low occurs
+# the mean, and also the amount of the day spent over that mean
+# the flow of the diurnal cycle: the high between midnight and noon and the high between noon and midnight
+# the range - the low and the high for a given day
+# focus on month - month as much as possible
+# reporting which sensors have the highest and lowest values so they knew which sensors are at greater risk
+
+
+#PM2.5 98th %ile
+#For PM2.5, the 98th percentile of the daily average measurements in the YEAR.
+#
+percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.05,0.33,0.5,0.66,0.75,0.95))
+
+#PM2.5 Wtd Mean
+#For PM2.5, the Weighted Annual Mean (mean weighted by calendar quarter) for the year.
+#you can only do this with the historical pct difference data
+#
+#PM2.5 24-hr 2nd Max
+#For PM2.5, the 2nd highest 24-hour average measurement in the year.
+twenty4HRmeans <- zoo::rollmean(avgSG$average_PM2.5,k=24)
+secondMax <- max(twenty4HRmeans[-max(twenty4HRmeans)])
+#
+#PM2.5 8-hr 4th Max
+#For PM2.5, the 4th highest daily max 8-hour average in the year.
+
+hour8avgs <- data.t(matrix(ncol=sensorNum,nrow=0))
+names(hour8avgs) <- sensors$names
+
+for(j in 1:sensorNum){
+  rollavg <- zoo::rollmean(PAhourly$PM2.5[PAhourly$names==sensors$names[j]],k=8)
+  
+  hour8avgs[,j] <- append(hour8avgs[,j], rollavg)
+}
+
+eightHRavgs <- zoo::rollmean(avgSG$average_PM2.5, k=8)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#Sensor Summary
+
+#Grouping the values from each sensor to get readings for the region of South Gate
+# with the new PurpleAir API, use the confidence values to weight each sensor reading when making area averages
+#pct_threshold=0.7
+
+avgSG <- aggregate(cbind(PM2.5, hour,day) ~ timestamp, 
+                   data = PAhourly[month(PAhourly$timestamp) >1,], 
+                   FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), range= range(x), count =round(length(unique(x)),0)  ))
+
+PM2.5.median <- avgSG$PM2.5[,2] 
+PM2.5.count <- avgSG$PM2.5[,4]
+PM2.5.range <- avgSG$PM2.5[,3]
+
+avgSG <- data.frame()
+
+avgSG <- aggregate(cbind(PM2.5, hour,day) ~ timestamp, 
+                   data = PAhourly[month(PAhourly$timestamp) >1,], FUN=mean )
+
+avgSG <- cbind(avgSG, PM2.5.median, PM2.5.range,PM2.5.count)
+
+avgSG$average_PM2.5 <- round(avgSG$average_PM2.5, 2)
+
+colnames(avgSG) <- c('timestamp', "average_PM2.5", "hour", 'day', "median_PM2.5", "active sensors")
+
+
+
+
+
+
+
+
+
+summarySG <- function(data) {
+  
+  data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
+  
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp))
+  
+  avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
+                     data = data,
+                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(x),0), max = round(max(x),2), min=round(min(x),2), range = max(x) - min(x)  ))
+  
+  PM2.5.median <- avgSG$PM2.5[,2]
+  PM2.5.count <- avgSG$PM2.5[,3]
+  PM2.5.max <- avgSG$PM2.5[,4]
+  PM2.5.min <- avgSG$PM2.5[,5]
+  PM2.5.range <- avgSG$PM2.5[,6]
+  
+  avgSG <- data.frame()
+  
+  avgSG <- aggregate(cbind(PM2.5, lubridate::hour(timestamp),lubridate::mday(timestamp)) ~ timestamp,
+                     data = data[month(data$timestamp) >1,], FUN= function(x) {round(mean(x),2)} )
+  
+  avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.range, PM2.5.count)
+  
+  colnames(avgSG) <- c('timestamp', "average_PM2.5", "hour", 'day', "median_PM2.5", "max", "min", "range", "active sensors")
+  avgSG <- dplyr::mutate(avgSG,
+                         category = dplyr::case_when(average_PM2.5 >= 0 & average_PM2.5 <=12 ~ "Good",
+                                                     average_PM2.5 >= 12.01 & average_PM2.5 <=35.4 ~ "Moderate",
+                                                     average_PM2.5 >= 35.41 & average_PM2.5 <= 55.4 ~ "Unhealthy for Sensitive Groups",
+                                                     average_PM2.5 >= 55.41 & average_PM2.5 <= 150.4 ~ "Unhealthy",
+                                                     average_PM2.5 >= 150.41 & average_PM2.5 <= 250.4 ~ "Very Unhealthy",
+                                                     average_PM2.5 >= 250.41 & average_PM2.5 <= 500 ~ "Hazardous",
+                                                     average_PM2.5 >= 500.01 ~ "Hazardous+")
+  )
+  
+  avgSG
+  
+}
+
+dailySG <- function(data) {
+  
+  data$timestamp <- cut(data$timestamp, breaks="hour") #uses the "timestamp" column
+  
+  data$timestamp <- lubridate::ymd_hms(as.character(data$timestamp), tz = "America/Los_Angeles")
+  
+  avgSG <- aggregate(cbind(PM2.5, longitude) ~ lubridate::mday(timestamp),
+                     data = data,
+                     FUN=function(x) c(mean=round(mean(x),2), median = round(median(x),2), count =round(length(unique(x)),0), max = round(max(x),2), min=round(min(x),2)  ))
+  
+  PM2.5.median <- avgSG$PM2.5[,2]
+  PM2.5.count <- avgSG$longitude[,"count"]
+  PM2.5.max <- avgSG$PM2.5[,4]
+  PM2.5.min <- avgSG$PM2.5[,5]
+  PM2.5.range <- PM2.5.max - PM2.5.min
+  
+  avgSG <- data.frame()
+  
+  avgSG <- aggregate(cbind(PM2.5) ~ as.Date(timestamp),
+                     data = data, FUN= function(x) {round(mean(x),2)} )
+  
+  avgSG <- cbind(avgSG, PM2.5.median, PM2.5.max, PM2.5.min, PM2.5.range, PM2.5.count)
+  
+  names(avgSG) <- c('day', "average_PM2.5", "median_PM2.5", "max", "min", "range", "active sensors")
+  
+  avgSG <- dplyr::mutate(avgSG,
+                            category = dplyr::case_when(average_PM2.5 >= 0 & average_PM2.5 <=12 ~ "Good",
+                                                        average_PM2.5 >= 12.01 & average_PM2.5 <=35.4 ~ "Moderate",
+                                                        average_PM2.5 >= 35.41 & average_PM2.5 <= 55.4 ~ "Unhealthy for Sensitive Groups",
+                                                        average_PM2.5 >= 55.41 & average_PM2.5 <= 150.4 ~ "Unhealthy",
+                                                        average_PM2.5 >= 150.41 & average_PM2.5 <= 250.4 ~ "Very Unhealthy",
+                                                        average_PM2.5 >= 250.41 & average_PM2.5 <= 500 ~ "Hazardous",
+                                                        average_PM2.5 >= 500.01 ~ "Hazardous+")
+  )
+  
+  avgSG
+  
+}
+
+noOutlier <- PAhourly[PAhourly$PM2.5 <= mean(PAhourly$PM2.5)*20,]
+
+avgSG <- PurpleAirCEHAT::summarySG(PAhourly)
+
+dailySG <- PurpleAirCEHAT::dailySG(PAhourly)
+
+
+wessy_pal <- c("high"="#C93312","low"="#899DA4")
+
+hilo <- ggplot(data=dailySG, aes(x=day, group = day)) +
+  geom_segment(aes(x=day, xend=day, y=min,yend=max),lwd=1)+
+  geom_point(aes(y=max, col="high"), size=5) +
+  geom_point(aes(y=min, col="low"), size=5)+
+  labs(x = 'Day', y = 'PM25') +
+  scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) +    
+  ggtitle("Daily Highs and Lows") +
+  theme_minimal()
+
+ggplotly(hilo)
+
+
+
+plot(y=dailySG$range, x=dailySG$day,type="o")
+grid()
+
+historical <- ggplot(avgSG[avgSG$timestamp <= avgSG$timestamp[nrow(avgSG)] & avgSG$timestamp >= avgSG$timestamp[nrow(avgSG)]-lubridate::weeks(1),], aes(x=as_datetime(timestamp),y=average_PM2.5, group=category))+
+  geom_hline(aes(yintercept = mean(average_PM2.5)), color="blue", linetype="dashed")+
+  geom_col(aes(fill=category),col=1, lwd=0.5)+
+  #stat_summary(aes(y=average_PM2.5), fun=mean, geom="line", colour="green")+
+  labs(x = "Day", y = "PM2.5") +
+  ggtitle(" Daily Average PM2.5")+
+  theme_minimal()+
+  scale_fill_discrete(type=EPAcols)+
+  theme(axis.text.x = element_text(angle = 75, hjust=1))
+
+
+ggplotly(historical)
+
+
+summarySG(PAfull)
+
+
+PAhourly <- left_join(PAhourly, avgSG, by = c("timestamp", "hour", "day"), keep=F)
+
+
+diurnalR <- aggregate(cbind(range) ~ hour,
+                     data = avgSG, FUN= function(x) {round(mean(x),2)} )
+
+diurnalA <- aggregate(cbind(average_PM2.5) ~ hour,
+                      data = avgSG, FUN= function(x) {round(mean(x),2)} )
+
+diurnalM <- aggregate(cbind(max) ~ hour,
+                      data = avgSG, FUN= function(x) {round(mean(x),2)} )
+
+
+plot(diurnalA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#which sensors typically report the highest values?
+print(ggplot(PAhourly[PAhourly$PM2.5> PAhourly$median_PM2.5,], aes(x=names, group = timeofday))+
+        geom_histogram(aes(y=after_stat(count/nrow(PAhourly[PAhourly$PM2.5> PAhourly$median_PM2.5,]))),  alpha=0.7, stat="count", lwd=1)+
+        #geom_point(aes(, ycolor=timeofday, alpha=0.01))+
+        #geom_density(alpha = 0.1, fill = "grey")+
+        labs(x = "Sensors", y = "Density") +
+        ggtitle("Density of Readings Over South Gate Median by Sensor")+
+        scale_color_brewer(palette="RdYlBu")+
+        scale_fill_brewer(palette="RdYlBu")+
+        theme_minimal()+
+        theme(axis.text.x = element_text(angle = 45, hjust=1))
+)
+
+
+readings_over <- dplyr::filter(PAhourly, PM2.5> median_PM2.5)
+
+readings_over$pct_over <- (abs(readings_over$PM2.5 - readings_over$median_PM2.5)/readings_over$median_PM2.5)*100
+
+
+readings_under <- dplyr::filter(PAhourly, PM2.5< median_PM2.5 )
+
+
+readings_overCT <- PurpleAirCEHAT::compareSensors(PAhourly,'a')
+
+
+readings_underCT <- PurpleAirCEHAT::compareSensors(PAhourly,'b')
+
+
+downSensors <- downSensors1(aprilHourly,TRUE)
+
+
+print(ggplot(downSensors[[2]], aes(y=numDownDays))+
+        geom_col(aes(x= names, y=numDownDays),  alpha=0.7, lwd=1)+
+        labs(x = "Sensors", y = "Number of Days") +
+        ggtitle("Number of 'Down' Days")+
+        ylim(0,max(downSensors[[2]][,2]))+
+        scale_color_brewer(palette="RdYlBu")+
+        scale_fill_brewer(palette="RdYlBu")+
+        theme_minimal()+
+        theme(axis.text.x = element_text(angle = 45, hjust=1))
+)
+
+pct_diffCols <- c("0-15%"="#FEEDDE", "15%-50%"="#FDBE85","50%-100%" = "#FD8D3C", "200% or more"="#E6550D","total readings"="#80808050")
+
+print(ggplot(readings_overCT, aes(x=names)) + 
+        geom_col(aes(y=total_readings, fill= "total readings"), col=1) + 
+        geom_col(aes(y=`0-15%`, fill="0-15%"), col=1) +
+        geom_col(aes(y=`15%-50%`, fill="15%-50%"), col=1) +
+        geom_col(aes(y=`50%-100%`, fill="50%-100%"), col=1) +
+        geom_col(aes(y=`above_200%`, fill="200% or more"), col=1) +
+        labs(x = "Sensors", y = "Count") +
+        ggtitle("Readings Over Median by Sensor")+
+        theme_minimal()+
+        scale_colour_manual(name="Values",values=pct_diffCols, guide = guide_legend(override.aes=aes(fill=NA)) ) +
+        scale_fill_manual(name="Values",values=pct_diffCols) +
+        theme(axis.text.x = element_text(angle = 75, hjust=1))
+        )
+
+
+EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
+
+#Category of Readings by Sensor
+print(ggplot(PAhourly, aes(x=names, group=category)) + 
+        geom_histogram(aes(y=after_stat(count), color=category, fill=category), position = position_stack(reverse = TRUE), stat="count", lwd=0.5, col="black")+
+        labs(x = "Sensors", y = "Count") +
+        ggtitle("Category of Readings by Sensor")+
+        theme_minimal()+
+        scale_fill_discrete(type=EPAcols)+
+        theme(axis.text.x = element_text(angle = 75, hjust=1))
+  
+)
+
+print(ggplot(PAhourly[PAhourly$names == sensors$names[7],], aes(x=category, group=category)) + 
+        geom_histogram(aes(y=after_stat(count/nrow(PAhourly[PAhourly$names == sensors$names[1],])), color=category, fill=category), stat="count", lwd=0.5, col="black")+
+        labs(x = "Sensors", y = "Count") +
+        ggtitle("Category of Readings by Sensor")+
+        theme_minimal()+
+        #scale_color_discrete(type=EPAcols)+
+        scale_fill_discrete(type=EPAcols)+
+        theme(axis.text.x = element_text(angle = 75, hjust=1))
+      
+)
+
+cats <- ggplot(PAhourly, aes(x=category)) + 
+        geom_histogram(aes(y=after_stat(count), fill=category), position = position_stack(reverse = TRUE), stat="count", lwd=0.5, col="black")+
+        labs(x = "Sensors", y = "Count") +
+        ggtitle("Category of Readings by Sensor")+
+        theme_minimal()+
+        #scale_color_discrete(type=EPAcols)+
+        scale_fill_discrete(type=EPAcols)+
+        theme(axis.text.x = element_text(angle = 75, hjust=1))
+      
+ggplotly(cats)
+
+
+print(ggplot() + 
+        geom_col(readings_overCT, aes(x=names, y=total_readings, fill="total readings")) + 
+        # geom_col(aes(y=, fill="readings above median"), col=1) +
+        labs(x = "Sensors", y = "Count") +
+        ggtitle("Readings Over Median by Sensor")+
+        theme_minimal()+
+        scale_fill_manual(name="Values",values=jessy) +
+        theme(axis.text.x = element_text(angle = 75, hjust=1))
+)
+
+
+
+library(plotly)
+
+k <- ggplot(readings_overCT, aes(longitude, latitude)) + 
+  geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+  geom_point(aes(size= count/total_readings, color=count/total_readings)) + 
+  scale_color_gradient(low='gold', high='red', name= "Normalized Readings") + 
+  guides(size=FALSE) +
+  xlim(-118.2325,-118.155) +
+  ylim(33.91029, 33.96837)+
+  ggtitle("Readings Over Median by Sensor")+
+  geom_text(aes(label=names), check_overlap = F, show.legend = F, size = 3, vjust = 2)+ 
+  theme_minimal()
+
+  ggplotly(k)
+
+print(ggplot(readings_underCT, aes(longitude, latitude)) + 
+        geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+        geom_point(aes(size= count/total_readings, color=count/total_readings)) + 
+        scale_color_gradient(low='violet', high='blue', name= "Normalized High Values") +
+        xlim(-118.2325,-118.155) +
+        ylim(33.91029, 33.96837)+
+        guides(size=FALSE) +
+        ggtitle("Readings Under Median by Sensor")+
+        geom_text(aes(label=names), check_overlap = F, show.legend = F, size = 3, vjust = 2)+ 
+        theme_minimal()
+)
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+high_low <- PurpleAirCEHAT::highslows(PAhourly)
+
+high_low <- left_join(high_low, PAhourly, by = c("PM2.5", "day","latitude","longitude"), keep= F)
+
+
+hist(high_low$PM2.5[high_low$type=="high"], freq=T, breaks=seq(from=1,to=100,by=10))
+
+
+plot(high_low$PM2.5[high_low$type=="high"])
+qqnorm(high_low$PM2.5[high_low$type=="high"])
+
+print(ggplot(high_low[high_low$type=="low",], aes(x=day, y=PM2.5, group = names))+
+        #geom_histogram(aes(color=timeofday, fill=timeofday, alpha=0.7), stat="count", bins=4, lwd=1)+
+        geom_line(aes(color=names))+
+        geom_point(aes(color=names))+
+        #geom_smooth(method=lm, col=1)+
+        ggtitle("Plot of Peak PM2.5 Values Over 24 hour period")+
+        #geom_density(alpha = 0.3, fill = "#FF6666")+
+        labs(x = "Day", y = "PM2.5 (µg/m³)") +
+        scale_color_brewer(palette="RdYlBu")+
+        theme_minimal()
+)
+
+
+
+#------------------------------------------------------------------------------------------------------------------
+
+
+PAfiltered <- PAhourly
+
+PAfiltered <- left_join(PAfiltered, avgSG, by = c("timestamp", "hour", "day"), keep=F)
+
+
+
+PAfiltered$difference <- abs(PAfiltered$PM2.5 - PAfiltered$avgPM)
+PAfiltered$pct_difference <- PAfiltered$difference/ PAfiltered$avgPM
+
+PAfiltered <- dplyr::filter(PAfiltered, pct_difference <= percent_threshold)
+
+avgSG <- aggregate(cbind(PM2.5, hour,day) ~ timestamp, 
+                   data = PAhourly[month(PAhourly$timestamp) >1,], mean)
+
+plot(avgSG$PM2.5, type="o")
+
+avgSG$hour <- hour(avgSG$timestamp)
+avgSG$day <- mday(avgSG$timestamp)
+
+SGhighs <- aggregate(cbind(PM2.5) ~ day, data = avgSG, max)
+SGhighs <- left_join(SGhighs, avgSG, by=c("PM2.5", "day"))
+
+SGlows <- aggregate(cbind(PM2.5) ~ day, data = avgSG, min)
+SGlows <- left_join(SGlows, avgSG, by=c("PM2.5", "day"))
+
+
+hist(SGhighs$hour, breaks= seq(0,24,by=1))
+hist(SGlows$hour, breaks= seq(0,24,by=1))
+
+#creating daily high and low visualizations
+#create our high/low dataframe
+#--------------------------------------------------------
+#Writing Data for Interpolations
+#------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+#now picking a sample of timestamps at random to test interpolation methods on
+
+dec1<- PAhourly[PAhourly$timestamp=="2020-12-01 18:00:00",]
+set.seed(10)
+index <- sample(1:nrow(PAhourly), 14)
+dates <- PAhourly$timestamp[index]
+
+stamps <- length(dates)
+
+
+
+#writes those timestamps to the desktop
+#for (k in 1:stamps) {
+ # d <- dates[k]
+  #Date <- PAhourly %>% dplyr::filter(timestamp == d)
+  
+  #out <- paste("C:\\Users\\jimzi\\Desktop\\date", k, ".csv", sep="")
+  
+  #write.csv(Date, out, row.names = FALSE)
+#}
+
+pm25_april <- read.csv("~/PurpleAirCEHAT/pm25_april.csv")
+
+april <- newCleanPA(pm25_april)
+
+aprilHourly <- PurpleAirCEHAT::hourlyPA(april, TRUE)
+
+aprilAVG <- summarySG(aprilHourly)
+
+aprilHourly <- left_join(aprilHourly, aprilAVG, by = c("timestamp", "hour", "day"), keep=F)
+
+
+highslows1 <- function(data) {
+  
+  sensors <- unique(data[,c('longitude','latitude')])
+  
+  sensorNum <- nrow(sensors)
+  
+  hi_lo <- data.frame()
+  
+  for (i in 1:sensorNum) {
+    high <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                      data = data[data$longitude == sensors[i,1],], max)
+    
+    nhighs <- nrow(high)
+    type <- c(type = rep(c("high"), nhighs))
+    high$type <- type
+    
+    low <- aggregate(cbind(PM2.5, latitude, longitude) ~ as.Date(timestamp, tz = "America/Los_Angeles"),
+                     data = data[data$longitude == sensors[i,1], ], min)
+    
+    nvals <- nrow(low)
+    type <- c(type = rep(c("low"), nvals))
+    low$type <- type
+    
+    hi_lo <- rbind(hi_lo,high,low)
+  }
+  names(hi_lo)[1] <- "date"
+  hi_lo$day <- lubridate::mday(hi_lo$date)
+  
+  hi_lo <- dplyr::left_join(hi_lo, data, by = c("PM2.5", "day","latitude","longitude"), keep= F)
+  
+  hi_lo <- hi_lo[order(hi_lo$date),]
+  
+  hi_lo <- hi_lo[!duplicated(hi_lo[,c("date","PM2.5","type","names")]),]
+  
+  hi_lo
+}
+
+highslows1(aprilHourly)
+
+
+#--------------------------------------------------------
+#Visualizations
+#------------------------------------------------------------------------------------------------------------------
+
+wessy_pal <- c("high"="#C93312","low"="#899DA4")
+
+#Lollipop chart!
+print(ggplot(data=PAhi_lo[PAhi_lo$longitude == sensors[2,1],], aes(x=Date, y=PM2.5, group = Date)) +
+        geom_line(lwd=1)+
+        geom_point(data=PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300 & PAhi_lo$longitude == sensors[2,1], ], 
+                 aes(x=Date, y=PM2.5, group = type, col="high"), size=5)+
+        geom_point(data=PAhi_lo[PAhi_lo$type == "low" & PAhi_lo$longitude == sensors[2,1], ], 
+                 aes(x=Date, y=PM2.5, group = type, col="low"), size=5)+
+        labs(x = "Day", y = "PM2.5 (µg/m³)") +
+        scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) + 
+        scale_fill_manual(name="Type",values=wessy_pal) +
+        ggtitle(sensors$names[2]) +
+        theme_minimal())
+
+#STACKED BAR PLOTS
+print(ggplot() +
+        geom_col(data=PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300 & PAhi_lo$longitude == sensors[7,1], ], 
+                 aes(x=day, y=PM2.5, group = type, fill="high"), col=1)+
+        geom_col(data=PAhi_lo[PAhi_lo$type == "low" & PAhi_lo$longitude == sensors[7,1], ], 
+                 aes(x=day, y=PM2.5, group = type, fill="low"), col=1)+
+        ggtitle(sensors$names[7]) +
+        labs(x = "Day", y = "PM2.5 (µg/m³)") +
+        scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) + scale_fill_manual(name="Type",values=wessy_pal) +
+        theme_minimal())
+
+#OFFSET BARS
+print(ggplot() +
+        geom_col(data=PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300 & PAhi_lo$longitude == sensors[7,1], ], 
+                 aes(x=day, y=PM2.5, group = type, fill="high"), col=1)+
+        geom_col(data=PAhi_lo[PAhi_lo$type == "low" & PAhi_lo$longitude == sensors[7,1], ], 
+                 aes(x=day, y=PM2.5, group = type, fill="low"), col=1, position = position_nudge(0.4))+
+        ggtitle(sensors$names[7]) +
+        scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) + 
+        scale_fill_manual(name="Type",values=wessy_pal) +
+        theme_minimal())+
+        labs(x = "Day", y = "PM2.5 (µg/m³)") 
+
+
+#BOXPLOT
+print(ggplot(data=PAhi_lo[PAhi_lo$PM2.5<=300 & PAhi_lo$longitude == sensors[7,1],], aes(x=day, y=PM2.5, group = day)) +
+        geom_boxplot(lwd=1)+
+        ggtitle(sensors$names[7]) +
+        theme_minimal())
+
+#LINE-AREA CHART
+highs <- subset(PAhi_lo[PAhi_lo$type=="high" & PAhi_lo$PM2.5<=300 & PAhi_lo$longitude == sensors[7,1],])
+lows <- subset(PAhi_lo[PAhi_lo$type=="low"& PAhi_lo$longitude == sensors[7,1],])
+colnames(lows) <- c("day","PM2.5L","latitude","longitude","type","names","timestamp","humidity","hour","timeofday")
+highlows <- left_join(highs, lows, by = c("day","names", "latitude","longitude"))
+
+print(ggplot(data=highlows) +
+        geom_line(aes(x=day, y=PM2.5, col="high"), lwd=1.5)+ 
+        geom_line(aes(x=day, y=PM2.5L, col="low"), lwd=1.5)+
+        geom_point(aes(x=day, y=PM2.5), size=2.5)+
+        geom_point(aes(x=day, y=PM2.5L),size=2.5)+
+        geom_ribbon(aes(x=day, ymin=PM2.5L,ymax=PM2.5), fill="grey", alpha=0.5) +
+        #geom_text(aes(label=sprintf("%0.2f", round(PM2.5x, digits=1))), inherit.aes = T, vjust=1.6, color="black",
+        #         position = position_dodge(0.7), size=3.5)+
+        scale_color_brewer(palette="Dark2")+
+        labs(x = "Day", y = "PM2.5 (µg/m³)") +
+        scale_colour_manual(name="Type",values=wessy_pal, guide = guide_legend(override.aes=aes(fill=NA)) ) + 
+        ggtitle(sensors$names[7]) +
+        theme_minimal())
+
+
+
+
+
+    
+#FOR histogram
+tod <- count(PAhi_lo[PAhi_lo$type == "high",], timeofday)
+
+colnames(tod) <- c("timeofday", "frequency")
+
+#VIOLIN PLOT of HIGHS
+print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=timeofday, y=PM2.5, group = timeofday))+
+              geom_violin(aes(color=timeofday),lwd=1)+
+              geom_point(aes(color=timeofday), alpha=0.3)+
+        scale_color_brewer(palette="Dark2")+
+        theme_minimal()
+)
+
+#BOXPLOT of HIGHS
+print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=timeofday, y=PM2.5, group = timeofday))+
+        geom_boxplot(aes(color=timeofday),lwd=1)+
+        geom_point(aes(color=timeofday), alpha=0.075)+
+        scale_color_brewer(palette="Dark2")+
+        theme_minimal()
+)
+
+#NO BOXPLOT, only POINTS
+print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=timeofday, y=PM2.5, group = timeofday))+
+        geom_point(aes(color=timeofday), alpha=0.35)+
+        scale_color_brewer(palette="Dark2")+
+        theme_minimal())
+
+#HISTOGRAM/DENSITY PLOT
+print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=hour, group = timeofday))+
+        geom_histogram(aes(y=after_stat(count/nrow(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,])), color=timeofday, fill=timeofday),  alpha=0.7, stat="count", bins=4, lwd=1)+
+        #geom_point(aes(, ycolor=timeofday, alpha=0.01))+
+        geom_density(alpha = 0.1, fill = "grey")+
+        labs(x = "Hour", y = "Density") +
+        ggtitle("Density of Peak PM2.5 Values Over 24-hour Period")+
+        scale_color_brewer(palette="Dark2")+
+        scale_fill_brewer(palette="Dark2")+
+        theme_minimal()
+)
+
+
+#Histogram
+hist(x=PAhi_lo$hour[PAhi_lo$type=="low"], breaks=c(0,6,12,18,23), freq=T, xlim=c(0,24), xlab = "Time of Day (hours)", main="Histogram for Times of Day During Which Lows are Acheived")
+hist(x=PAhi_lo$hour[PAhi_lo$type=="high"], breaks=c(0,6,12,18,23), freq=T, xlim=c(0,24), xlab = "Time of Day (hours)", main="Histogram for Times of Day During Which Highs are Acheived")
+
+
+
+#SCATTER PLOT
+print(ggplot(PAhi_lo[PAhi_lo$type == "high" & PAhi_lo$PM2.5<=300,], aes(x=hour, y=PM2.5, group = timeofday))+
+        #geom_histogram(aes(color=timeofday, fill=timeofday, alpha=0.7), stat="count", bins=4, lwd=1)+
+        geom_point(aes(color=timeofday, alpha=0.01))+
+        geom_smooth(method=lm, col=1)+
+        ggtitle("Plot of Peak PM2.5 Values Over 24 hour period")+
+        #geom_density(alpha = 0.3, fill = "#FF6666")+
+        labs(x = "Hour", y = "PM2.5 (µg/m³)") +
+        scale_color_brewer(palette="Dark2")+
+        theme_minimal()
+)
+
+
+
+
+hist(x=PAhi_lo$hour[PAhi_lo$type=="low"], breaks=c(0,6,12,18,23), freq=T)
+PAhi_lo$PM2.5[PAhi_lo$timeofday=="night" & PAhi_lo$type=="high"]
+
+
+#------------------------------------------------------------------------#
+#Create a spatial points data frame to work with interpolation functions
+longlat <- PAhourly[,c(5,4)]
+
+PAhourlySP <- SpatialPointsDataFrame(data = PAhourly, coords = longlat,
+                                      proj4string = CRS("+proj=longlat +zone=19 +ellps=GRS80 +datum=WGS84"))
+
+#plot(PAhourlySP$channelAPmReading ~ PAhourlySP$datehour)
+
+
+write.csv(slicePA1,"C:\\Users\\jimzi\\Desktop\\slicePA.csv", row.names = FALSE)
+
+slicePA <- PAhourly[PAhourly$timestamp == "2020-12-26 17:00:00",]
+
+#sliceGEO <- as.geodata(slicePA, data.col = 2, coords.col = c("longitude","latitude"))
+
+slicecoords <- slicePA[,c("longitude","latitude")]
+
+sliceSP <- SpatialPointsDataFrame(data = slicePA, coords = slicecoords,
+                               proj4string = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+
+#SPLINE CV
+sg <- southgate()
+sg.grid <- southgate_grid()
+#-----------
+
+thinPlate <- Tps(date1[-1,c(5,4)], date1$`PM2.5`[-1])
+sgRaster <- raster(sg)
+sgRaster <- disaggregate(sgRaster, fact=10)
+
+tps <- interpolate(sgRaster, thinPlate)
+tps <- mask(tps, sg.grid)
+plot(tps)
+
+slicePA <- spTransform(slicePA, CRS("+proj=longlat +zone=18 +ellps=WGS84 +datum=WGS84"))
+sg.gridT <- spTransform(sg.grid, CRS("+proj=longlat +zone=18 +ellps=WGS84 +datum=WGS84"))
+sliceSP <- spTransform(sliceSP, CRS("+proj=longlat +zone=18 +ellps=WGS84 +datum=WGS84"))
+
+###############################
+coordinates(slicePA) = ~longitude+latitude
+m <- vgm(psill = 16.96369, "Gau", range=0.006245958)
+# simple kriging:
+x <- krige(PM2.5~1, sliceSP, sg.grid, model = m, beta = 5.9)
+par(mfrow = c(2, 1))
+spplot(x["var1.pred"], main = "simple kriging predictions", 
+       colorkey=TRUE, contour = FALSE,  col.regions = rev(get_col_regions()))
+spplot(x["var1.var"],  main = "simple kriging variance")
+
+# residual variogram:
+m <- vgm(.4, "Sph", 954, .06)
+################################
+
+#Simple Kriging interpolation with the gstat package
+testKrige.gstat <- gstat::krige(sliceSP$PM2.5~1,sliceSP,sg.grid, model=m, beta=5.9)
+testKrige.gstat$direct <- testKrige.gstat$var1.pred
+
+testKrige.gstat$log <- exp(krige(sliceSP$PM2.5~1,sliceSP,sg.grid, model=m)$var1.pred)
+
+spplot(testKrige.gstat[c("direct","log")],colorkey=TRUE, contour = FALSE,  col.regions = rev(get_col_regions()))
+
+
+testKrigeDF <- data.frame(testKrige.gstat)
+testKrige.gstat %>% as.data.frame %>%
+  ggplot() + geom_tile(aes(x,y,fill=var1.pred)) + coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw() 
+
+krigePlot <- ggplot() + geom_tile(testKrigeDF, mapping = aes(x,y,fill=direct), alpha=0.90) + 
+  geom_point(sliceSP@data[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, fill="red" , mapping =aes(longitude, latitude), inherit.aes = TRUE) + 
+  coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw() + 
+  ggtitle("Simple Kriging PM2.5 Predictions")
+
+ggplotly(krigePlot)
+
+krigeVars <- ggplot() + geom_tile(testKrigeDF, mapping = aes(x,y,fill=var1.var), alpha=0.5) + 
+  geom_point(sliceSP@data[,c('PM2.5',"longitude","latitude")], color ="red", size=2 , mapping =aes(longitude, latitude), inherit.aes = TRUE) + 
+  coord_equal() +
+  scale_fill_continuous(type = "gradient") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw() + 
+  ggtitle("Simple Kriging PM2.5 Predictions")
+
+krigeVars
+
+
+
+
+Kbayes <- krige.bayes(sliceGEO, coords=sliceGEO[[1]], locations = sg.grid@coords,
+                      model = model.control(cov.m="gaussian", kappa=0.5),
+                      prior = prior.control(phi.discrete=seq(0, 1, l=11),
+                                            phi.prior="uniform"))
+
+krigePlot <- ggplot() + 
+  #geom_tile(as.data.frame(Kbayes$predictive), mapping = aes(x,y,fill=simulations)) + 
+  geom_point(slicePA[,c(1:3)], color ="red", size=2 , mapping =aes(longitude, latitude)) + 
+  coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw()
+
+
+slicePA <- PAhourly[PAhourly$timestamp == "2020-12-26 17:00:00 UTC",]
+
+slicecoords <- slicePA[,c("longitude","latitude")]
+
+sliceSP <- SpatialPointsDataFrame(data = slicePA, coords = slicecoords,
+                                  proj4string = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+
+variogram = automap::autofitVariogram(PM2.5~1, sliceSP, model="Gau", miscFitOptions = list(min.np.bin = 3, merge.small.bins = TRUE) )
+plot(variogram)
+
+#sg.gridT <- spTransform(sg.grid, CRS("+proj=utm +zone=19 +ellps=WGS84 +datum=WGS84"))
+#sliceSPT <- spTransform(sliceSP, CRS("+proj=utm +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+sg.grid@proj4string <- CRS("+proj=utm +zone=19 +ellps=WGS84 +datum=WGS84")
+sliceSP@proj4string <- CRS("+proj=utm +zone=19 +ellps=WGS84 +datum=WGS84")
+
+kriging_result = automap::autoKrige(PM2.5~1, sliceSP, sg.grid, model="Gau", miscFitOptions = list(min.np.bin = 3, merge.small.bins = TRUE))
+spplot(kriging_result$krige_output[c("var1.pred","var1.stdev")])
+
+
+autoDF <- data.frame(kriging_result$krige_output)
+
+
+autoDF <- data.frame(krigePA(PAhourly, as_datetime("2020-12-17 17:00:00 UTC")))
+
+par(mfrow=c(1,1))
+
+kriging_result$krige_output %>% as.data.frame %>%
+  ggplot() + geom_tile(aes(x,y,fill=var1.pred)) + coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  theme_bw() 
+
+autoPlot <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.pred), alpha=0.90) + 
+  geom_point(sliceSP@data[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, fill="red" , mapping =aes(longitude, latitude), inherit.aes = TRUE) + 
+  coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw() + 
+  ggtitle("Simple Kriging PM2.5 Predictions")
+
+ggplotly(autoPlot)
+
+autoVars <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=var1.stdev), alpha=0.9) + 
+  geom_point(sliceSP@data[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, fill="red" , mapping =aes(longitude, latitude), inherit.aes = TRUE) + 
+  coord_equal() +
+  scale_fill_continuous(type = "viridis") +
+  #scale_x_continuous(labels=comma) + scale_y_continuous(labels=comma) +
+  theme_bw() + 
+  ggtitle("Simple Kriging PM2.5 Standard Deviation")
+
+ggplotly(autoVars)
+
+
+
+
+
+
+cities <- tigris::places(state = "CA", cb = TRUE, year=2019)
+sg <- dplyr::filter(cities, NAME == "South Gate")
+
+sg.city <- as(sg, "Spatial")
+sg.city <- sp::spTransform(sg.city, CRSobj = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+long.range <- as.numeric(range(sg.city@bbox[1,]))
+lat.range <- as.numeric(range(sg.city@bbox[2,]))
+
+test.grid <- expand.grid(x = seq(from = long.range[1], to = long.range[2], by = .0005), y = seq(from = lat.range[1], to = lat.range[2], by = .0005))
+
+sg.grid <- sp::SpatialPoints(test.grid, proj4string = CRS(proj4string(sg.city)))
+
+sg.grid <- sp::SpatialPixelsDataFrame(points= sg.grid[sg.city,], data = as.data.frame(sg.grid[sg.city,]@coords))
+
+sg.grid
+
+
+#------------------------------
+library(sp)
+
+longlat <- PAhourly[,c(5,4)]
+
+slicePA <- PAhourly[PAhourly$timestamp == "2020-12-26 17:00:00",]
+
+sliceGEO <- as.geodata(slicePA, data.col = 2, coords.col = c("longitude","latitude"))
+
+slicecoords <- slicePA[,c("longitude","latitude")]
+
+sliceSP <- SpatialPointsDataFrame(data = slicePA, coords = slicecoords,
+                                  proj4string = CRS("+proj=longlat +zone=19 +ellps=WGS84 +datum=WGS84"))
+
+coordinates(slicePA) = ~longitude+latitude
+
+sg.grid <- as(sg.grid, "SpatialPixelsDataFrame")
+
+# cokriging of the four heavy metal variables
+
+SG.sk <- gstat(id="PM2.5", formula=PM2.5~1, data=slicePA, nmax = 1)
+
+SG.sk <- gstat(SG.sk, "humidity", humidity~1, slicePA, nmax = 1)
+
+SG.sk <- gstat(SG.sk, model=vgm(1, "Gau", 2, 1), fill.all=T)
+
+x <- variogram(SG.sk, cutoff=1000)
+
+SG.fit = fit.lmc(variogram, SG.sk)
+
+plot(x, model = SG.fit)
+
+z <- predict(SG.fit, newdata = sg.grid)
+
+library(lattice)
+
+pl1 <- spplot(z["zn.pred"], main="log-zinc predictions")
+
+pl2 <- spplot(z["cu.pred"], main="log-copper predictions")
+
+pl3 <- spplot(z["cd.pred"], main="log-cadmium predictions")
+
+pl4 <- spplot(z["pb.pred"], main="log-lead predictions")
+
+print(pl1, split = c(1,1,2,2), more=TRUE)
+
+
+
+krigePlot <- ggplot(Kbayes$predictive$simulations)
+
+# Ordinary kriging
+sliceOK = autoKrige(PM2.5~1, PAspslice, sg.grid, verbose=FALSE, miscFitOptions = list(min.np.bin = 2))
+Sys.sleep(3)
+plot(sliceOK)
+

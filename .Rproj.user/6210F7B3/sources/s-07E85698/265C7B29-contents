@@ -1,0 +1,66 @@
+---
+title: "inClass2"
+author: "Lotenna Nwobbi"
+date: "4/14/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r 7.16}
+set.seed(47)
+
+ar2 <- arima.sim(n=60, list(ar=c(0.6,0.3)))
+
+ar(ar2,order.max=2,AIC=F,method='yw')
+ar(ar2,order.max=2,AIC=F,method='ols')
+ar(ar2,order.max=2,AIC=F,method='mle')
+
+
+
+ar2.1 <- arima.sim(n=25, list(ar=c(0.6,0.3)))
+
+ar(ar2.1,order.max=2,AIC=F,method='yw')
+ar(ar2.1,order.max=2,AIC=F,method='ols')
+ar(ar2.1,order.max=2,AIC=F,method='mle')
+
+
+ar2.2 <- arima.sim(n=125, list(ar=c(0.6,0.3)))
+
+ar(ar2.2,order.max=2,AIC=F,method='yw')
+ar(ar2.2,order.max=2,AIC=F,method='ols')
+ar(ar2.2,order.max=2,AIC=F,method='mle')
+
+```
+
+```{r 7.21}
+set.seed(6789)
+library(TSA)
+
+arma <- arima.sim(n=48, list(ar=0.7, ma=-0.6), rand.gen = function(n) + rt(n,6))
+
+eacf(arma)
+
+arima(arma,order = c(1,0,1), method='ML')
+
+
+
+
+```
+
+
+
+```{r 7.29}
+data(robot)
+
+model <- ar(robot)
+ar(model,order.max=1,AIC=F,method='yw')
+
+
+``` 
+

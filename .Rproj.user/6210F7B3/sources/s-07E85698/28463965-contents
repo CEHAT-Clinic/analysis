@@ -1,0 +1,104 @@
+---
+title: "Data_Science_Performance_Task"
+author: "Lotenna Nwobbi"
+date: "4/14/2021"
+output: pdf_document
+---
+
+```{r data, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+population_by_blockgroup <- read.csv("C:/Users/jimzi/Downloads/population_by_blockgroup.csv", quote="")
+
+distance_from_school_to_blockgroup_in_miles <- read.csv("C:/Users/jimzi/Downloads/distance_from_school_to_blockgroup_in_miles.csv", quote="")
+
+census_codebook <- read.csv("C:/Users/jimzi/Downloads/census_codebook.csv")
+
+```
+
+
+1. How many people live in Providence? 179,494
+
+```{r population}
+#subset the block group data to only show PROVIDENCE rows
+providence_BGs <- population_by_blockgroup[ population_by_blockgroup$city == "PROVIDENCE",]
+
+pop_Providence <- sum(providence_BGs$B01001_001E)
+
+print(pop_Providence)
+
+```
+
+
+
+2. How many people who are at least 65 years old live in Providence? 19,350
+
+```{r popover65}
+# note that ages 65-255 (FOR MALES) are in the following fields (from census_codebook): 
+# B01001_020E, B01001_021E, B01001_022E, B01001_023E, B01001_024E, B01001_025E 
+# these are columns 26-31
+
+# for females: B01001_044E, B01001_045E, B01001_046E, B01001_047E, B01001_048E, B01001_049E 
+# these are columns 50-55
+
+malesOver65 <- apply(providence_BGs[,c(26:31)], 2, sum)
+femalesOver65 <- apply(providence_BGs[,c(50:55)], 2, sum)
+
+pop_Over65 <- sum(malesOver65) + sum(femalesOver65)
+ 
+print(pop_Over65)
+
+```
+
+
+3. How many people who are at least 65 years old live within one mile of Classical High School in Providence (called CLASSICAL in the data set)? 4072
+
+```{r ClassicalOneMile}
+library(dplyr)
+#subset distance_from_school_to_blockgroup_in_miles
+
+Classical <- distance_from_school_to_blockgroup_in_miles[ distance_from_school_to_blockgroup_in_miles$school_short_name == "CLASSICAL",]
+
+#subset again to only show GEOIDs within 1 mile of Classical High School
+
+ClassicalOneMile <- Classical[Classical$distance <= 1,]
+
+# now subset providence_BGs to get only those over 65 in the GEOIDs within 
+# 1 mile of Classical High School
+
+providence_Over65WithinOneMile <- providence_BGs[providence_BGs$GEOID10 %in% ClassicalOneMile$GEOID10, c(1:6,26:31,50:55)]
+
+# now repeat steps from 2
+
+over65WithinOneMile <- apply(providence_Over65WithinOneMile[,c(7:18)], 2, sum)
+
+
+pop_Over65WithinOneMile <- sum(over65WithinOneMile)
+ 
+print(pop_Over65WithinOneMile)
+
+
+```
+
+
+4. What is the mean distance a resident of Providence who is at least 65 years old lives from their nearest school? About 2.15 miles
+
+
+```{r meanDist}
+
+
+providence_Over65 <- providence_BGs[,c(1:6,26:31,50:55)] 
+
+providence_Over65$total <- apply(providence_BGs[,c(26:31,50:55)], 1, sum)
+
+# combine the total population over 65 along with the distance from school data by GEOID
+distance_with_Over65 <- left_join(distance_from_school_to_blockgroup_in_miles, providence_Over65[,c("GEOID10", "total")], by = "GEOID10", keep=F)
+
+# aggregate by total
+elderlyByDistance <- aggregate(distance ~ total, data = distance_with_Over65, mean)
+
+AVERAGE_DIST <- sum(elderlyByDistance$total*elderlyByDistance$distance)/sum(elderlyByDistance$total)
+
+print(AVERAGE_DIST)
+
+```

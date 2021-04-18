@@ -1,0 +1,115 @@
+---
+pdf_document: default
+author: "Lotenna Nwobbi"
+title: "HW9"
+output:
+  pdf_document: default
+keep_tex: yes
+latex_engine: pdflatex
+template: ' theme / article-template.tex '
+fontsize: 12 pt
+fig_caption: yes
+---
+
+## Question 1
+
+
+\textbf{7.17} Simulate an ARMA(1,1) series with $\phi = 0.7$, $\theta = 0.4$, and $n = 72$.
+\begin{enumerate}
+\item[(a)] Find the method-of-moments estimates of $\phi$ and $\theta$.
+\item[(b)] Find the conditional least squares estimates of $\phi$ and $\theta$ and compare them with part (a).
+\item[(c)] Find maximum likelihood estimates of $\phi$ and $\theta$ and compare them withparts (a) and (b).
+\item[(d)] Repeat  parts  (a),  (b),  and  (c)  with  a  new  simulated  series  using  the  same parameters and same sample size. Compare your new results with your results from the first simulation
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+
+
+
+\eject
+
+
+
+
+
+
+
+## Question 2
+
+\textbf{7.29} The data file named robot contains a time series obtained from an industrial robot. The robot was put through a sequence of maneuvers, and the distance from a desired ending point was recorded in inches. This was repeated 324 times to form the time series.
+\begin{enumerate}
+\item[(a)] Estimate the parameters of an AR(1) model for these data
+\item[(b)] Estimate the parameters of an IMA(1,1) model for these data.
+\item[(c)] Compare the results from parts (a) and (b) in terms of AIC.
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+
+\eject
+
+
+
+
+## Question 3
+
+\textbf{7.29} The data file named days contains accounting data from the Winegard Co. of Burlington, Iowa. The data are the number of days until Winegard receives payment for 130 consecutive orders from a particular distributor of Winegard products.(The name of the distributor must remain anonymous for confidentiality reasons.) The time series contains outliers that are quite obvious in the time series plot.
+\begin{enumerate}
+\item[(a)] Replace each of the unusual values with a value of 35 days, a much more typical value, and then estimate the parameters of an MA(2) model.
+\item[(b)] Now assume an MA(5) model and estimate the parameters. Compare these results with those obtained in part (a).
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+
+
+\eject
+
+
+
+
+
+## Question 4
+
+\textbf{8.7} Fit an AR(3) model by maximum likelihood to the square root of the hare abundance series (filename hare).
+\begin{enumerate}
+\item[(a)] Plot the sample ACF of the residuals. Comment on the size of the correlations.
+\item[(b)] Calculate the Ljung-Box statistic summing to $K=9$. Does this statistic support the AR(3) specification?
+\item[(c)] Perform a runs test on the residuals and comment on the results.
+\item[(d)] Display the quantile-quantile normal plot of the residuals. Comment on the plot.
+\item[(e)] Perform the Shapiro-Wilk test of normality on the residuals.
+\end{enumerate}
+\noindent\rule{165mm}{0.4pt}
+
+
+
+
+
+\eject
+
+
+## Question 5
+
+\textbf{8.9} The data file named robot contains a time series obtained from an industrial robot. The robot was put through a sequence of maneuvers, and the distance from a desired ending point was recorded in inches. This was repeated 324 times to form the time series. Compare the fits of an AR(1) model and an IMA(1,1) model for these data in terms of the diagnostic tests discussed in this chapter.
+\noindent\rule{165mm}{0.4pt}
+
+
+
+
+
+\eject
+
+
+
+
+
+
+
+## Question 6
+
+\textbf{8.10} The  data  file  named  deere3  contains  57  consecutive  values  from  a  complex machine tool at Deere & Co. The values given are deviations from a target value in units of ten millionths of an inch. The process employs a control mechanism that resets some of the parameters of the machine tool depending on the magnitude of deviation from target of the last item produced. Diagnose the fit of an AR(1) model for these data in terms of the tests discussed in this chapter.
+\noindent\rule{165mm}{0.4pt}
+
+
+
