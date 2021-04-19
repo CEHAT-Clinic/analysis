@@ -39,8 +39,8 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
                     # Output: Tabset w/ plot, summary, and table ----
                     tabsetPanel(type = "tabs",
-                                tabPanel("Introduction",
-                                         h2("Overview"),
+                                tabPanel("Overview",
+                                         h2("Introduction"),
                                          p("Welcome to the South Gate CEHAT Data Analysis report"),
                                          br(),
                                          p("First, select your", strong("PurpleAir csv file,"), "answer the question asked, then confirm which sensors you wish to include"),
@@ -193,6 +193,8 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                          mainPanel(
                                              h2("Graphs for different Sensors"),
                                              plotlyOutput("catsSensors"),
+                                             br(),
+                                             br(),
                                              plotOutput("catsBySensor"),
                                              plotlyOutput("downDays"),
 
@@ -464,8 +466,8 @@ server <- function(input, output) {
 
     sensors <- reactive({
         req(input$file1)
-        
-        
+
+
         sensors <- unique(PAfull()[,c("longitude","latitude")])
         #adding the names of 11 sensors
         #to add another sensor, end the previous line with a comma, and input the following info for the new sensor:
@@ -989,7 +991,7 @@ server <- function(input, output) {
         else if(x[x$category == "Good",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Good",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Good",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1004,7 +1006,7 @@ server <- function(input, output) {
         else if(x[x$category == "Moderate",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Moderate",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Moderate",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1019,7 +1021,7 @@ server <- function(input, output) {
         else if(x[x$category == "Unhealthy for Sensitive Groups",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Unhealthy for Sensitive Groups",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Unhealthy for Sensitive Groups",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1034,7 +1036,7 @@ server <- function(input, output) {
         else if(x[x$category == "Unhealthy",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Unhealthy",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Unhealthy",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1050,7 +1052,7 @@ server <- function(input, output) {
         else if(x[x$category == "Very Unhealthy",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Very Unhealthy",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Very Unhealthy",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1065,7 +1067,7 @@ server <- function(input, output) {
         else if(x[x$category == "Hazardous",2]/sum(x[,2])<0.01){
             q <- "< 0.01%"
         }
-        else{q<-paste(round(x[x$category == "Hazardous",2]/sum(x[,2]), 2),"%")}
+        else{q<-paste(trunc(x[x$category == "Hazardous",2]/sum(x[,2]), 2),"%")}
         q
     })
 
@@ -1404,14 +1406,14 @@ server <- function(input, output) {
 
     output$prediction <- renderPlotly({
         req(input$date1)
-        
+
         PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
-        
+
         if(length(input$sensorSel) >= 5){
             autoDF <- data.frame(PurpleAirCEHAT::krigePA(PAhourly, as_datetime(input$date1)+ lubridate::hours(input$hour)))
-            
+
             names(autoDF)["var1.pred"] <- "predicted"
-            
+
             autoPlot <- ggplot() + geom_tile(autoDF, mapping = aes(x,y,fill=prediction), alpha=0.90) +
                 geom_point(PAhourly[,c('PM2.5',"longitude","latitude")], color ="black", size=2, pch=21, mapping = aes(longitude, latitude, fill=PM2.5), inherit.aes = TRUE) +
                 coord_equal() +
@@ -1419,7 +1421,7 @@ server <- function(input, output) {
                 labs(x = "longitude", y="latitude")+
                 theme_bw() +
                 ggtitle("Ordinary Kriging PM2.5 Predictions")
-            
+
             ggplotly(autoPlot)
         }
         else{
