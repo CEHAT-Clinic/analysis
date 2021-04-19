@@ -33,8 +33,6 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                 
                 # Sidebar layout with input and output definitions ----
                 
-                
-                
                 mainPanel(
                     
                     # Output: Tabset w/ plot, summary, and table ----
@@ -94,11 +92,10 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              br(),
                                              
                                              strong("Compare Diurnal Patterns to a Shorter Time Period"),
-                                             uiOutput("dateRange4"),
+                                             uiOutput("dateRange4")
                                              # selectInput("month", label = "Choose month(s):",
                                              #             choices = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "November", "December"), selected = "December")
                                              
-                                             downloadButton("downloadPAhourly", "Download Hourly Sensor Data")
                                              
                                          ),
                                          
@@ -154,20 +151,12 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              fluidRow(
                                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput(outputId = "avgs1"), plotOutput(outputId = "avgs2"))
                                              ),
-                                             fluidRow(
-                                                 splitLayout(cellWidths = c("50%", "50%"), verbatimTextOutput(outputId = "avgStats1"), verbatimTextOutput(outputId = "avgStats2"))
-                                             ),
                                              
                                              h2("Diurnal Patterns"),
                                              
                                              plotOutput("diurnalAVG"),
                                              plotOutput("diurnalMax"),
-                                             plotOutput("diurnalRange"),
-                                             
-                                             br(),
-                                             br(),
-                                             br(),
-                                             br()
+                                             plotOutput("diurnalRange")
                                              
                                              
                                              
@@ -192,8 +181,6 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              plotOutput("catsBySensor"),
                                              plotlyOutput("downDays"),
                                              
-                                             plotOutput("percentDiff"),
-                                             
                                              br(),
                                              plotlyOutput(outputId="highlowSensor"),
                                              br(),
@@ -211,10 +198,10 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              br(),
                                              plotlyOutput(outputId = "underMap"),
                                              
-                                             br(),
-                                             br(),
-                                             br(),
                                              br()
+                                             
+                                             
+                                             # br(),
                                              
                                              
                                          )
@@ -245,14 +232,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                          br(),
                                          plotlyOutput(outputId = "compareBoxplot"),
                                          br(),
-                                         plotlyOutput(outputId = "compareBar"),
-                                         
-                                         br(),
-                                         br(),
-                                         br(),
-                                         br()
-                                         
-                                         
+                                         plotlyOutput(outputId = "compareBar")
                                          
                                 ),
                                 tabPanel("Interpolation and Sensor Placement",
@@ -269,12 +249,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              
                                              plotlyOutput("variance"),
                                              
-                                             plotlyOutput("stdev"),
-                                             
-                                             br(),
-                                             br(),
-                                             br(),
-                                             br()
+                                             plotlyOutput("stdev")
                                              
                                          )
                                          
@@ -296,20 +271,9 @@ server <- function(input, output) {
     # RENDERING UI FOR DATA-DEPENDENT INPUTS
     ##############################################
     
-    
-    observeEvent(input$file1, {
-        showNotification("Are you sure that the data selected was downloaded before March 30, 2021?", type = "error")
-    })
-    
-    
     output$sensorSel <- renderUI({
         req(input$file1)
         sensors <- sensors()
-        
-        if(is.null(sensors)==TRUE){
-            message("Are you sure that the data selected was downloaded before March 30, 2021?")
-        }
-        #else if()
         
         pickerInput("sensorSel","Include sensors:",
                     choices = sensors$names,
@@ -460,8 +424,6 @@ server <- function(input, output) {
         
         messyPA <- read.csv(input$file1$datapath, quote= '"')
         PAfull <- PurpleAirCEHAT::newCleanPA(messyPA)
-        
-        
         
         return(PAfull)
     })
@@ -712,7 +674,7 @@ server <- function(input, output) {
         max1 <- max(diurnalR)
         max2 <- max(addDiurnal)
         
-        plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values", xlab="Hour", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR,type="o", lwd=1.5, main = "Range of PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -738,7 +700,7 @@ server <- function(input, output) {
         max1 <- max(diurnalR)
         max2 <- max(addDiurnal)
         
-        plot(diurnalR,type="o", lwd=1.5, main = "Peak PM2.5 Values", ylab="PM2.5 (μg/m3)", xlab="Hour", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR,type="o", lwd=1.5, main = "Peak PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
         lines(addDiurnal, type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -764,7 +726,7 @@ server <- function(input, output) {
         max1 <- max(diurnalR)
         max2 <- max(addDiurnal)
         
-        plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5 Values", ylab="PM2.5 (μg/m3)", xlab = "Hour", ylim=c(min(min1,min2), max(max1,max2)))
+        plot(diurnalR,type="o", lwd=1.5, main = "Average PM2.5 Values", ylab="PM2.5 (μg/m3)", ylim=c(min(min1,min2), max(max1,max2)))
         lines(addDiurnal,type="o", lwd=1.5, col="blue")
         grid()
     })
@@ -1148,51 +1110,6 @@ server <- function(input, output) {
         secondMax
     })
     
-    output$avgStats1 <- renderText({
-        req(input$file1)
-        req(input$dates1)
-        avgSG <- summarySG()
-        
-        #saves the start and end dates as a single vector, with start at index 1 and end at 2
-        dates <- c(input$dates1)
-        
-        avgs <- zoo::rollmean(avgSG$average_PM2.5[lubridate::date(avgSG$timestamp) >= toString(dates[1]) & lubridate::date(avgSG$timestamp) <= toString(dates[2])], k=8)
-        
-        secondMax <- max(avgs[-max(avgs)])
-        maximum <- max(avgs)
-        range <- range(avgs)
-        
-        output <- paste(    paste("Maximum Average for 8-Hour Period:", maximum, sep=" "),
-                            paste("Low of 8-Hour Averages:", range[1], sep=" "),
-                            paste("High of 8-Hour Averages:", range[2], sep=" "),
-                            sep="\n")
-        
-        output
-    })
-    
-    
-    output$avgStats2 <- renderText({
-        req(input$file1)
-        req(input$dates1)
-        avgSG <- summarySG()
-        
-        #saves the start and end dates as a single vector, with start at index 1 and end at 2
-        dates <- c(input$dates2)
-        
-        avgs <- zoo::rollmean(avgSG$average_PM2.5[lubridate::date(avgSG$timestamp) >= toString(dates[1]) & lubridate::date(avgSG$timestamp) <= toString(dates[2])], k=8)
-        
-        secondMax <- max(avgs[-max(avgs)])
-        maximum <- max(avgs)
-        range <- range(avgs)
-        
-        output <- paste(    paste("Maximum Average for 8-Hour Period:", maximum, sep=" "),
-                            paste("Low of 8-Hour Averages:", range[1], sep=" "),
-                            paste("High of 8-Hour Averages:", range[2], sep=" "),
-                            sep="\n")
-        
-        output
-    })
-    
     
     output$catsPlot <- renderPlotly({
         req(input$file1)
@@ -1274,19 +1191,7 @@ server <- function(input, output) {
         hist(PAhi_lo$PM2.5[PAhi_lo$names==input$sensor & PAhi_lo$type == "high"], probability = TRUE, breaks = as.numeric(input$n_breaks),
              xlab = "PM2.5 (μg/m3)", main = "Histogram of High Values")
         
-        curve(dnorm(x, mean=mean, sd=std), col="darkblue", lwd=2, add=TRUE) #fits a normal curve to observe normality in the distribution
-    })
-    
-    output$percentDiff <- renderPlot({
-        req(input$file1)
-        
-        PAfull <- newPAfull()
-        if(input$answer == "Y"){
-            title <- paste("Historical Percent Difference for", input$sensor, sep=" ")
-            
-            plot(x=PAfull$timestamp[PAfull$names==input$sensor], y=PAfull$percent.diff[PAfull$names==input$sensor], xlab = "Time", ylab = "Percent Difference", main = title, type="l")
-        }
-        else{return(NULL)}
+        curve(dnorm(x, mean=mean, sd=std), col="darkblue", lwd=2, add=TRUE) #fits a normal curve to observe normaility in the distribution
     })
     
     output$density <- renderPlotly({
@@ -1300,7 +1205,7 @@ server <- function(input, output) {
             geom_histogram(aes(y=after_stat(count/nrow(PAhi_lo[PAhi_lo$type == "high",])), color=timeofday, fill=timeofday), alpha=0.7, stat="count", bins=4, lwd=1)+
             geom_density(alpha = 0.2, fill = "grey")+
             labs(x = "Hour", y = "Density") +
-            ggtitle("Peak PM2.5 Values by Density Over 24-hour Period")+
+            ggtitle("Density of Peak PM2.5 Values Over 24-hour Period")+
             scale_color_brewer(palette="Set1")+
             scale_fill_brewer(palette="Set1")+
             theme_minimal()
@@ -1392,7 +1297,7 @@ server <- function(input, output) {
         Title <- paste("8 Hour Averages From", paste(as.character(input$dates1), collapse = " to "))
         
         avgs <- zoo::rollmean(avgSG$average_PM2.5[lubridate::date(avgSG$timestamp) >= toString(dates[1]) & lubridate::date(avgSG$timestamp) <= toString(dates[2])], k=8)
-        plot(avgs,type="l", main= Title, ylab = "PM2.5 (μg/m3)")
+        plot(avgs,type="l", main= Title)
     })
     
     output$avgs2 <- renderPlot({
@@ -1407,7 +1312,7 @@ server <- function(input, output) {
         Title <- paste("8 Hour Averages From", paste(as.character(input$dates2), collapse = " to "))
         
         avgs <- zoo::rollmean(avgSG$average_PM2.5[lubridate::date(avgSG$timestamp) >= toString(dates[1]) & lubridate::date(avgSG$timestamp) <= toString(dates[2])], k=8)
-        plot(avgs,type="l",main=Title, ylab = "PM2.5 (μg/m3)")
+        plot(avgs,type="l",main=Title)
     })
     
     output$prediction <- renderPlotly({
@@ -1490,24 +1395,9 @@ server <- function(input, output) {
     })
     
     
-    output$downloadPAhourly <- downloadHandler(
-        
-        filename = function() {
-            req(file1)
-            
-            dates <- c(as.character(format(as.Date(min(PAhourly()$timestamp))),"yyyy-mm-dd"), as.character(format(as.Date(max(PAhourly()$timestamp))),"yyyy-mm-dd"))
-            
-            paste("hourlyPA", paste(dates, collapse = "_to_") , ".csv", sep = "_")
-        },
-        content = function(file) {
-            write.csv(PAhourly(), file, row.names = FALSE)
-        }
-    )
-    
-    
     output$report <- downloadHandler(
         # For PDF output, change this to "report.pdf"
-        filename = "report.pdf",
+        filename = "report.html",
         content = function(file) {
             # Copy the report file to a temporary directory before processing it, in
             # case we don't have write permissions to the current working dir (which
@@ -1516,7 +1406,7 @@ server <- function(input, output) {
             file.copy("report.Rmd", tempReport, overwrite = TRUE)
             
             # Set up parameters to pass to Rmd document
-            params <- list(n = input$dates1)
+            params <- list(n = input$file1)
             
             # Knit the document, passing in the `params` list, and eval it in a
             # child of the global environment (this isolates the code in the document
