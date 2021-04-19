@@ -169,7 +169,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                          sidebarPanel(
                                              
                                              uiOutput("sensorSel_HL"),
-                                             
+                                             uiOutput("sensor"),
                                              p("Histogram of Highs Slider"),
                                              selectInput("n_breaks", label = "Number of bins:",
                                                          choices = c(4, 8, 16, 24), selected = 8),
@@ -283,7 +283,7 @@ server <- function(input, output) {
     
     output$sensorSel_HL <- renderUI({
         req(input$file1)
-        sensors <- sensorsList()
+        sensors <- sensors()
         
         selectInput("sensor", label = "Select sensor:",
                     choices = sensors$names, selected = sensors$names[1])
