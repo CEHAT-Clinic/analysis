@@ -723,11 +723,11 @@ compareSensors <- function(data, type = c('a', 'b'), new){
 sensitiveLocations <- function(data,time){
   
   # sensitive locations
-  sensitiveLocations <- data.frame(places = c("Sch Tweedy Elementary", "Sch Bryson Elementary","Sch South Gate Middle","Sch San Miguel School",
-                                              "Sch Stanford Elementary","Sch San Gabriel Elementary","Sch South East High","Sch Liberty Boulevard Elementary",
+  sensitiveLocations <- data.frame(places = c("Tweedy Elementary School", "Bryson Elementary School","South Gate Middle Sch","San Miguel School",
+                                              "Stanford Elementary School","San Gabriel Elementary School","South East High School","Liberty Boulevard Elementary School",
                                               "South Gate Park","Circle Park","El Paseo Shopping Center","Azalea Shopping Center","MC Guadalupano",
-                                              "MC Tweedy","MC Clinica Maria","MC Loyola", "MC United","SC South Gate", "SC South Gate Senior Villas","SC South Gate Park"),
-                                             
+                                              "MC Tweedy","MC Clinica Maria","MC Loyola", "MC United","South Gate SC", "South Gate Senior Villas SC","South Gate Park SC"),
+                                   
                                    latitude = c(33.9435,33.9455,33.9540,33.9445,33.9505,33.9565,33.9435,33.962,33.946,
                                                 33.939,33.951,33.953,33.9420,33.9435,33.9625,33.9435,33.9420,33.9325,
                                                 33.9435,33.941),
@@ -735,7 +735,7 @@ sensitiveLocations <- function(data,time){
                                                  -118.2255,-118.223,-118.1895,-118.1695,-118.1695,-118.1860,
                                                  -118.2100,-118.2025,-118.2065,-118.1990,-118.184,-118.182,
                                                  -118.209,-118.2),
-                                   PMPred = rep(0,20))
+                                   'PMPred' = rep(0,20))
 
   predictions<- as.data.frame(krigePA(data,time))
   predictions$x <- round(predictions$x,4)
