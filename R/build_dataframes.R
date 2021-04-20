@@ -712,3 +712,37 @@ compareSensors <- function(data, type = c('a', 'b'), new){
 }
 
 
+#' Sensitive Locations
+#'
+#'
+#' @param the input is the data that is outputted in the PAhourly function and a
+#' time a character object of forrmat "yyyy-mm-dd hh:00:00" 
+#' @return a dataframe that contains sensitive locations and their locations 
+#' @export
+
+sensitiveLocations <- function(data,time){
+  
+  # sensitive locations
+  # sensitiveLocations <- data.frame(places = c("Tweedy Elementary", ,"Bryson Elementary","South Gate Middle","San Miguel School",
+  #                                             "Stanford Elementary","San Gabriel Elementary","South East High School",
+  #                                             "Liberty Boulevard Elementary","Stanford Avenue Park", "South Gate Park","Circle Park","El Paseo Shopping Center",
+  #                                             "Azalea Shopping Center","Tweedy MC", "Sanchez MC","Clinica Maria MC",
+  #                                             "Loyola MC", "Guadalupano MC", "United MC","South Gate SC", "Watts SC","Roosevelt Park SC",
+  #                                             "South Gate Senior Villas SC",
+  #                                             "Vista Verenda Assisted Living SC"),
+  #                                  latitude = c(),
+  #                                  longitude = c(),
+  #                                  PMPred = rep(0,29))
+  # 
+  # predictions<- as.data.frame(krigePA(data,time))
+  # predictions$x <- round(predictions$x,4)
+  # predictions$y <- round(predictions$y,4)
+  # 
+  # for (place in (1:length(sensitiveLocations$places))){
+  #   pm <- filter(predictions,y == sensitiveLocations$latitude[place] &&
+  #                                      x == sensitiveLocations$longiitude[place])
+  #   
+  # }
+}
+
+

@@ -2,7 +2,7 @@
 #'
 #' This uses the automap package to conduct interpolation analysis on ONE HOUR of air quality data
 #' It assumes that the data is the output of the function "hourlyPA". There is no alternative for this
-#'
+#' 
 #'
 #' @param data output of hourlyPA function, or air quality data organized by 1-hour timestamps
 #' @param time a character object of forrmat "yyyy-mm-dd hh:00:00"
