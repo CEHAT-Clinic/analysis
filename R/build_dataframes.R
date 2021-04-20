@@ -475,7 +475,7 @@ overEPA_hist <- function(daysOver,numOfDays){
   list <- c()
   days <- c()
 
-  numOfDays <- 31
+  #numOfDays <- 31
   # find the frequency of the days over the EPA threshold
   for (day in (1:numOfDays)){
     freq <- 0
@@ -723,26 +723,33 @@ compareSensors <- function(data, type = c('a', 'b'), new){
 sensitiveLocations <- function(data,time){
   
   # sensitive locations
-  # sensitiveLocations <- data.frame(places = c("Tweedy Elementary", ,"Bryson Elementary","South Gate Middle","San Miguel School",
-  #                                             "Stanford Elementary","San Gabriel Elementary","South East High School",
-  #                                             "Liberty Boulevard Elementary","Stanford Avenue Park", "South Gate Park","Circle Park","El Paseo Shopping Center",
-  #                                             "Azalea Shopping Center","Tweedy MC", "Sanchez MC","Clinica Maria MC",
-  #                                             "Loyola MC", "Guadalupano MC", "United MC","South Gate SC", "Watts SC","Roosevelt Park SC",
-  #                                             "South Gate Senior Villas SC",
-  #                                             "Vista Verenda Assisted Living SC"),
-  #                                  latitude = c(),
-  #                                  longitude = c(),
-  #                                  PMPred = rep(0,29))
-  # 
-  # predictions<- as.data.frame(krigePA(data,time))
-  # predictions$x <- round(predictions$x,4)
-  # predictions$y <- round(predictions$y,4)
-  # 
-  # for (place in (1:length(sensitiveLocations$places))){
-  #   pm <- filter(predictions,y == sensitiveLocations$latitude[place] &&
-  #                                      x == sensitiveLocations$longiitude[place])
-  #   
-  # }
+  sensitiveLocations <- data.frame(places = c("Sch Tweedy Elementary", "Sch Bryson Elementary","Sch South Gate Middle","Sch San Miguel School",
+                                              "Sch Stanford Elementary","Sch San Gabriel Elementary","Sch South East High","Sch Liberty Boulevard Elementary",
+                                              "South Gate Park","Circle Park","El Paseo Shopping Center","Azalea Shopping Center","MC Guadalupano",
+                                              "MC Tweedy","MC Clinica Maria","MC Loyola", "MC United","SC South Gate", "SC South Gate Senior Villas","SC South Gate Park"),
+                                             
+                                   latitude = c(33.9435,33.9455,33.9540,33.9445,33.9505,33.9565,33.9435,33.962,33.946,
+                                                33.939,33.951,33.953,33.9420,33.9435,33.9625,33.9435,33.9420,33.9325,
+                                                33.9435,33.941),
+                                   longitude = c(-118.1890,-118.1950,-118.206,-118.2045,-118.2270,-118.2085,
+                                                 -118.2255,-118.223,-118.1895,-118.1695,-118.1695,-118.1860,
+                                                 -118.2100,-118.2025,-118.2065,-118.1990,-118.184,-118.182,
+                                                 -118.209,-118.2),
+                                   PMPred = rep(0,20))
+
+  predictions<- as.data.frame(krigePA(data,time))
+  predictions$x <- round(predictions$x,4)
+  predictions$y <- round(predictions$y,4)
+
+  for (place in (1:length(sensitiveLocations$places))){
+    pm <- filter(predictions,y == sensitiveLocations$latitude[place] &
+                                       x == sensitiveLocations$longitude[place])
+    if (length(pm$x) != 0){
+      sensitiveLocations$PMPred[place] <- pm$var1.pred
+      }
+  
+  }
+  sensitiveLocations
 }
 
 
