@@ -1,0 +1,24 @@
+{
+    "id": "CAC8C00E",
+    "path": "~/analysisApp/appLotenna.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1618806745674.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "cursorPosition": "532,2",
+        "scrollLine": "518"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1618794243,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1618794243,
+    "read_only": false,
+    "read_only_alternatives": []
+}
