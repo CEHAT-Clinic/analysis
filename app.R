@@ -1509,19 +1509,17 @@ server <- function(input, output) {
         
         sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
         schools <- filter(sensitiveLocations, endsWith(places,"School") )
-        #PM25 <- schools$PMPred
-        #schools$PMPred <- PM25
-        names(schools)[4] <- 'PM25'
+
         sg.city <- PurpleAirCEHAT::southgate()
         
         
         k <- ggplot(schools, aes(longitude, latitude,fill= PM25)) +
             geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
-            geom_point(aes(size= .9)) +
+            geom_point(aes(size= .9,fill=PM25)) +
             xlim(-118.2325,-118.155) +
             ylim(33.91029, 33.96837)+
             guides(size=FALSE) +
-            ggtitle("Using Kriging to Predict PM2.5 near schools")+
+            ggtitle("Using Kriging to Predict PM2.5 near Schools")+
             geom_text(aes(label=places), check_overlap = F, show.legend = F, size = 3, vjust = 2)+
             theme_minimal()
         
@@ -1537,13 +1535,13 @@ server <- function(input, output) {
         
         sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
         centers <- filter(sensitiveLocations, endsWith(places,"Park") | endsWith(places,"Center") )
-        #PM25 <- schools$PMPred
+       
         sg.city <- PurpleAirCEHAT::southgate()
         
         
-        k <- ggplot(centers, aes(longitude, latitude,fill= PM25)) +
+        k <- ggplot(centers, aes(longitude, latitude)) +
             geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
-            geom_point(aes(size= .9)) +
+            geom_point(aes(size= .9,fill= PM25)) +
             xlim(-118.2325,-118.155) +
             ylim(33.91029, 33.96837)+
             guides(size=FALSE) +
@@ -1563,13 +1561,13 @@ server <- function(input, output) {
         
         sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
         medicalCenters <- filter(sensitiveLocations, startsWith(places,"MC"))
-        #PM25 <- medicalCenter$PMPred
+        
         sg.city <- PurpleAirCEHAT::southgate()
         
         
-        k <- ggplot(medicalCenters, aes(longitude, latitude,fill= PM25)) +
+        k <- ggplot(medicalCenters, aes(longitude, latitude)) +
             geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
-            geom_point(aes(size= .9)) +
+            geom_point(aes(size= .9,fill= PM25)) +
             xlim(-118.2325,-118.155) +
             ylim(33.91029, 33.96837)+
             guides(size=FALSE) +
@@ -1589,13 +1587,13 @@ server <- function(input, output) {
         
         sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
         seniorCenters <- filter(sensitiveLocations, endsWith(places,"SC"))
-        #PM25 <- medicalCenter$PMPred
+
         sg.city <- PurpleAirCEHAT::southgate()
         
         
-        k <- ggplot(seniorCenters, aes(longitude, latitude,fill= PM25)) +
+        k <- ggplot(seniorCenters, aes(longitude, latitude)) +
             geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
-            geom_point(aes(size= .9)) +
+            geom_point(aes(size= .9,fill= PM25)) +
             xlim(-118.2325,-118.155) +
             ylim(33.91029, 33.96837)+
             guides(size=FALSE) +
