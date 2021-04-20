@@ -68,6 +68,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
                                          br(),
                                          p("After creating the desired plots, download this report as a pdf or html file by clicking the", strong("button"), "below"),
+                                         p("The report can only be uploaded with datasets that have been generated, so make sure to go to each page to ensure every plot is loaded."),
                                          br(),
                                          downloadButton("report", "Generate report")
 
@@ -183,29 +184,91 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
                                          ),
                                          mainPanel(
-                                             h2("Graphs for different Sensors"),
+
+
+                                             h2("Maintaining the Sensor Network"),
+                                             p("On this page, you can find several plots that showcase different aspects of sensors functionality,
+                                               including how often they go down, which EPA categories they tend to report, and which sensors typically report higher, or lower, values"),
+
+
+                                             br(),
+
+                                             h3("Network-based Observations"),
+                                             p("This section shows plots that include all of the sensors. These plots allow
+                                               for a holsitic inspection of the sensor network, showing where sensors report
+                                               higher values, where sensors report lower values, which sensors typically
+                                               report outliers, and finally, how often each of the sensors go down."),
+                                             br(),
+                                             br(),
+                                             p("The chart below is an interactive plot that breaks down the PM2.5 readings
+                                                of each sensor by their corresponding EPA categories. On this plot, you can
+                                                find the direct number of readings in each category for a particular sensor.
+                                                This chart is magnified in the following section,",  em("Single-Sensor Observations"),
+                                               "which shows the same breakdown for individual sensors by percentage."),
                                              plotlyOutput("catsSensors"),
-                                             plotOutput("catsBySensor"),
+                                             br(),
+                                             br(),
+
+                                             p("The chart below reports the number of days during which a sensor did not report any
+                                               PM2.5 readings. Keep in mind that, for any sensors that are activated, or decativated,
+                                               during the timeframe observed in the data, this chart will report that as being 'down',
+                                               so external inforamtion about the sensor network is required to take these results at face-value."),
                                              plotlyOutput("downDays"),
                                              br(),
-                                             plotOutput("percentDiff"),
+                                             br(),
+                                             p("The following plot reports on the number of readings over the median that each sensor
+                                               records, and by how much. The 'median' here is calculated at each hour for all the
+                                               sensors in the network, and the readings are strictly over the median. Additionally,
+                                               the count of readings over the median for each sensor are further striated into
+                                               categories of incremental percent difference that inform about", em(strong("how much greater")),
+                                               "than the median the observed readings are. This chart is useful for both identifying
+                                               which sensors are typically reporting higher values, and of course, which sensors are
+                                               consistently reporting outliers."),
+                                             plotlyOutput(outputId = "overPlot"),
+                                             br(),
+                                             br(),
+                                             p("The following plot uses the total count of readings over the median from the previous plot,
+                                               normalizes them by the total readings collected. This serves as a spatial representation of
+                                               the previous plot."),
+                                             plotlyOutput(outputId = "overMap"),
+                                             br(),
+                                             br(),
+                                             p("The following plot two plots correspond to the opposite of the previous two plots, corresponding
+                                               to the readings under the median, and then the normalized readings under the median, represented spatially."),
+                                             plotlyOutput(outputId = "underPlot"),
+                                             br(),
+                                             br(),
+                                             plotlyOutput(outputId = "underMap"),
 
+
+                                             br(),
+
+                                             br(),
+
+
+                                             br(),
+                                             h3("Single-Sensor Observations"),
+                                             p("This section displays plots and observations for an individual sensor, which is selected
+                                               by the drop-down selection at the top of the sidebar. In this section, you will find
+                                               visualizations for high and low values, EPA categories by percentage, and historical percent
+                                               difference data (for data downloaded after March, 30, 2021)."),
+
+                                             plotOutput("catsBySensor"),
+                                             br(),
+                                             br(),
+                                             plotOutput("percentDiff"),
+                                             br(),
                                              br(),
                                              plotlyOutput(outputId="highlowSensor"),
                                              br(),
+                                             br(),
                                              plotOutput( outputId = "hiloHist"),
+                                             br(),
                                              br(),
                                              plotlyOutput(outputId = "overThresholdSensor"),
                                              br(),
                                              br(),
-                                             plotlyOutput(outputId = "overPlot"),
-                                             br(),
-                                             plotlyOutput(outputId = "overMap"),
-                                             br(),
-                                             br(),
-                                             plotlyOutput(outputId = "underPlot"),
-                                             br(),
-                                             plotlyOutput(outputId = "underMap"),
+
 
                                              br(),
                                              br(),
@@ -557,7 +620,10 @@ server <- function(input, output) {
         req(input$sensor)
 
         PAhourly <- PAhourly()
+
+
         Sensor <- PAhourly[PAhourly$names == input$sensor,]
+
         overEPA <- PurpleAirCEHAT::overEPA(Sensor)
 
         return(overEPA)
@@ -747,7 +813,7 @@ server <- function(input, output) {
 
         Average <- mean(avgSG$average_PM2.5)
 
-        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
+        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous" = "#7e0023")
 
         historical <- ggplot(avgSG[avgSG$day <= as.Date(input$date3) & avgSG$day >= as.Date(input$date3)-lubridate::days(30),], aes(x=day,y=average_PM2.5, group=category))+
             geom_hline(aes(yintercept = Average), color="blue", linetype="dashed")+
@@ -768,7 +834,7 @@ server <- function(input, output) {
         avgSG <- summarySG()
         Average <- mean(avgSG$average_PM2.5)
 
-        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
+        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous" = "#7e0023")
 
         historical <- ggplot(avgSG[avgSG$timestamp <= as_datetime(input$date2) & avgSG$timestamp >= as_datetime(input$date2)-lubridate::days(3),], aes(x=as_datetime(timestamp),y=average_PM2.5, group=category))+
             geom_hline(aes(yintercept = Average), color="blue", linetype="dashed")+
@@ -789,7 +855,7 @@ server <- function(input, output) {
 
         PAhourly <- PAhourly()
 
-        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
+        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous" = "#7e0023")
 
         print(ggplot(PAhourly[PAhourly$names == input$sensor,], aes(x=category, group=category)) +
                   geom_histogram(aes(y=after_stat(count/nrow(PAhourly[PAhourly$names == input$sensor,])), fill=category), stat="count", lwd=0.5, col="black")+
@@ -808,7 +874,7 @@ server <- function(input, output) {
 
         PAhourly <- PAhourly()
 
-        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous+" = "#7e0023")
+        EPAcols <- c("Good"="#00e400", "Moderate"="#ffff00","Unhealthy for Sensitive Groups" = "#ff7e00", "Unhealthy" = "#ff0000", "Very Unhealthy" = "#8f3f97", "Hazardous" = "#7e0023")
 
         plot <- ggplot(PAhourly, aes(x=names, group=category)) +
             geom_histogram(aes(y=after_stat(count), fill=category), position = position_stack(reverse = TRUE), stat="count", lwd=0.5, col="black")+
@@ -1054,7 +1120,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[1], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[1], "μg/m3", sep = " ")
         x
     })
 
@@ -1065,7 +1131,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[2], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[2], "μg/m3", sep = " ")
         x
     })
 
@@ -1076,7 +1142,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[3], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[3], "μg/m3", sep = " ")
         x
     })
 
@@ -1087,7 +1153,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[4], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[4], "μg/m3", sep = " ")
         x
     })
 
@@ -1098,7 +1164,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[5], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[5], "μg/m3", sep = " ")
         x
     })
 
@@ -1109,7 +1175,7 @@ server <- function(input, output) {
 
         percentiles <- quantile(avgSG$average_PM2.5, probs = c(0.25,0.33,0.5,0.66,0.75,0.95))
 
-        x <- paste(percentiles[6], "(μg/m3)", sep = " ")
+        x <- paste(percentiles[6], "μg/m3", sep = " ")
         x
     })
 
@@ -1121,7 +1187,7 @@ server <- function(input, output) {
         twenty4HRmeans <- zoo::rollmean(avgSG$average_PM2.5, k=24)
         secondMax <- max(twenty4HRmeans[-max(twenty4HRmeans)])
 
-        x <- paste(secondMax, "(μg/m3)", sep = " ")
+        x <- paste(secondMax, "μg/m3", sep = " ")
         x
     })
 
@@ -1505,36 +1571,27 @@ server <- function(input, output) {
             on.exit(setwd(owd))
             file.copy(src, 'report.Rmd', overwrite = TRUE)
 
+            params <- list(d1 = input$date1,
+                           d2 = input$date2,
+                           d3 = input$date3,
+                           dts1 = input$dates1,
+                           dts2 = input$dates2,
+                           dts3 = input$dates3,
+                           dts4 = input$dates4,
+                           hour = input$hour,
+                           PAhourly = PAhourly(),
+                           sensor = input$sensor,
+                           sensors = input$sensorSel,
+                           summary = summarySG(),
+                           under = readingsUnder() )
+
             library(rmarkdown)
-            out <- render('report.Rmd', pdf_document())
+            out <- render('report.Rmd', params = params, pdf_document(), envir = new.env(parent = globalenv()))
             file.rename(out, file)
         }
     )
 
 
-
-    output$report1 <- downloadHandler(
-        # For PDF output, change this to "report.pdf"
-        filename = "report.html",
-        content = function(file) {
-            # Copy the report file to a temporary directory before processing it, in
-            # case we don't have write permissions to the current working dir (which
-            # can happen when deployed).
-            tempReport <- file.path(tempdir(), "report.Rmd")
-            file.copy("report.Rmd", tempReport, overwrite = TRUE)
-
-            # Set up parameters to pass to Rmd document
-            params <- list(n = input$file1)
-
-            # Knit the document, passing in the `params` list, and eval it in a
-            # child of the global environment (this isolates the code in the document
-            # from the code in this app).
-            rmarkdown::render(tempReport, output_file = file,
-                              params = params,
-                              envir = new.env(parent = globalenv())
-            )
-        }
-    )
 
     test_that("error handler with unwrapped 0-param R function does throw an error", {
 
