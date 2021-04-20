@@ -75,7 +75,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
                                 ),
 
-                                tabPanel("Statistical Analysis",
+                                tabPanel("Summary Statistics",
                                          sidebarPanel(
                                              strong("Hourly Readings for the Week up to the Selected Date:"),
                                              uiOutput("date2"),
@@ -615,19 +615,7 @@ server <- function(input, output) {
 
     })
 
-    overEPAthreshold <- reactive({
-        req(input$file1)
-        req(input$sensor)
 
-        PAhourly <- PAhourly()
-
-
-        Sensor <- PAhourly[PAhourly$names == input$sensor,]
-
-        overEPA <- PurpleAirCEHAT::overEPA(Sensor)
-
-        return(overEPA)
-    })
 
     overEPAthresholdSG <- reactive({
         req(input$file1)
@@ -1360,30 +1348,12 @@ server <- function(input, output) {
                 geom_bar(position="dodge", stat="identity") +
                 ggtitle("Days over EPA threshold in South Gate")}
 
-        else{ epahist <- ggtitle("No days are over the EPA threshold for this month.") }
+        else{ 
+            epahist <- ggtitle("No days are over the EPA threshold for this month.") }
         ggplotly(epahist)
     })
 
 
-    output$overThresholdSensor <- renderPlotly({
-        req(input$file1)
-        req(input$sensor)
-
-        # finding the number of days in the data frame
-        PAhourly <- PAhourly()
-        Sensor <- PAhourly[PAhourly$names == input$sensor,]
-        numDays <- length(unique(lubridate::mday(Sensor$timestamp)))
-
-        overEPA <- overEPAthreshold()
-        ourData <- PurpleAirCEHAT::overEPA_hist(overEPA,numDays)
-        if(overEPA$timestamp > 0) {
-            epahist <- ggplot(ourData, aes(x=day,y=freq)) +
-                geom_bar(position="dodge", stat="identity") +
-                ggtitle(paste("Days over EPA threshold for",input$sensor,"in South Gate",sep=" "))}
-
-        else{ epahist <- ggtitle("No days are over the EPA threshold for this month.") }
-        ggplotly(epahist)
-    })
 
     output$compareBoxplot<- renderPlotly({
         req(input$file1)
