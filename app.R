@@ -1294,7 +1294,8 @@ server <- function(input, output) {
                 geom_bar(position="dodge", stat="identity") +
                 ggtitle("Days over EPA threshold in South Gate")}
 
-        else{ epahist <- ggtitle("No days are over the EPA threshold for this month.") }
+        else{ 
+            epahist <- ggtitle("No days are over the EPA threshold for this month.") }
         ggplotly(epahist)
     })
 
@@ -1304,18 +1305,20 @@ server <- function(input, output) {
         req(input$sensor)
 
         # finding the number of days in the data frame
+        
         PAhourly <- PAhourly()
         Sensor <- PAhourly[PAhourly$names == input$sensor,]
+        
         numDays <- length(unique(lubridate::mday(Sensor$timestamp)))
-
-        overEPA <- overEPAthreshold()
+        overEPA <- PurpleAirCEHAT::overEPA(Sensor)
         ourData <- PurpleAirCEHAT::overEPA_hist(overEPA,numDays)
+        
         if(overEPA$timestamp > 0) {
             epahist <- ggplot(ourData, aes(x=day,y=freq)) +
                 geom_bar(position="dodge", stat="identity") +
                 ggtitle(paste("Days over EPA threshold for",input$sensor,"in South Gate",sep=" "))}
 
-        else{ epahist <- ggtitle("No days are over the EPA threshold for this month.") }
+        else{ epahist <- ggtitle("No days are over the EPA threshold for this time period.") }
         ggplotly(epahist)
     })
 
