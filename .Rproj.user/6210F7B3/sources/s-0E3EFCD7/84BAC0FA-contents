@@ -322,6 +322,14 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              plotlyOutput("variance"),
 
                                              plotlyOutput("stdev"),
+                                             
+                                             plotlyOutput("schools"),
+                                             
+                                             plotlyOutput("parksShopping"),
+                                             
+                                             plotlyOutput("medicalCenters"),
+                                             
+                                             plotlyOutput("seniorCenters"),
 
                                              br(),
                                              br(),
@@ -670,7 +678,6 @@ server <- function(input, output) {
 
         return(readings_underCT)
     })
-
 
     ##################################################################################################
     # RENDERING PLOTS, TEXT, and TABLES
@@ -1343,13 +1350,13 @@ server <- function(input, output) {
         overEPA <- overEPAthresholdSG()
         ourData <- PurpleAirCEHAT::overEPA_hist(overEPA,numDays)
 
-        if(overEPA$timestamp > 0) {
+        if(length(overEPA$timestamp) > 0) {
             epahist <- ggplot(ourData, aes(x=day,y=freq)) +
                 geom_bar(position="dodge", stat="identity") +
                 ggtitle("Days over EPA threshold in South Gate")}
 
-        else{
-            epahist <- ggtitle("No days are over the EPA threshold for this month.") }
+        else{ 
+            stop("No days are over the EPA threshold for this month.") }
         ggplotly(epahist)
     })
 
@@ -1494,8 +1501,111 @@ server <- function(input, output) {
         }
 
     })
+    
+    output$schools <- renderPlotly({
+        req(input$date1)
+        
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        
+        sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
+        schools <- filter(sensitiveLocations, endsWith(places,"School") )
 
+        sg.city <- PurpleAirCEHAT::southgate()
+        
+        
+        k <- ggplot(schools, aes(longitude, latitude,fill= PM25)) +
+            geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+            geom_point(aes(size= .9,fill=PM25)) +
+            xlim(-118.2325,-118.155) +
+            ylim(33.91029, 33.96837)+
+            guides(size=FALSE) +
+            ggtitle("Using Kriging to Predict PM2.5 near Schools")+
+            geom_text(aes(label=places), check_overlap = F, show.legend = F, size = 3, vjust = 2)+
+            theme_minimal()
+        
+        
+        ggplotly(k)
+        
+    })
+    
+    output$parksShopping <- renderPlotly({
+        req(input$date1)
+        
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        
+        sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
+        centers <- filter(sensitiveLocations, endsWith(places,"Park") | endsWith(places,"Center") )
+       
+        sg.city <- PurpleAirCEHAT::southgate()
+        
+        
+        k <- ggplot(centers, aes(longitude, latitude)) +
+            geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+            geom_point(aes(size= .9,fill= PM25)) +
+            xlim(-118.2325,-118.155) +
+            ylim(33.91029, 33.96837)+
+            guides(size=FALSE) +
+            ggtitle("Using Kriging to Predict PM2.5 near Parks and Shopping Centers")+
+            geom_text(aes(label=places), check_overlap = F, show.legend = F, size = 3, vjust = 2)+
+            theme_minimal()
+        
+        
+        ggplotly(k)
+        
+    })
+    
+    output$medicalCenters <- renderPlotly({
+        req(input$date1)
+        
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        
+        sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
+        medicalCenters <- filter(sensitiveLocations, startsWith(places,"MC"))
+        
+        sg.city <- PurpleAirCEHAT::southgate()
+        
+        
+        k <- ggplot(medicalCenters, aes(longitude, latitude)) +
+            geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+            geom_point(aes(size= .9,fill= PM25)) +
+            xlim(-118.2325,-118.155) +
+            ylim(33.91029, 33.96837)+
+            guides(size=FALSE) +
+            ggtitle("Using Kriging to Predict PM2.5 near Medical Centers")+
+            geom_text(aes(label=places), check_overlap = F, show.legend = F, size = 3, vjust = 2)+
+            theme_minimal()
+        
+        
+        ggplotly(k)
+        
+    })
+    
+    output$seniorCenters <- renderPlotly({
+        req(input$date1)
+        
+        PAhourly <- PAhourly() %>% dplyr::filter(PAhourly()$timestamp == as_datetime(input$date1)+ lubridate::hours(input$hour))
+        
+        sensitiveLocations <- PurpleAirCEHAT::sensitiveLocations(PAhourly,as_datetime(input$date1)+ lubridate::hours(input$hour))
+        seniorCenters <- filter(sensitiveLocations, endsWith(places,"SC"))
 
+        sg.city <- PurpleAirCEHAT::southgate()
+        
+        
+        k <- ggplot(seniorCenters, aes(longitude, latitude)) +
+            geom_path(data = sg.city, aes(long, lat, group=id), color='black')+
+            geom_point(aes(size= .9,fill= PM25)) +
+            xlim(-118.2325,-118.155) +
+            ylim(33.91029, 33.96837)+
+            guides(size=FALSE) +
+            ggtitle("Using Kriging to Predict PM2.5 near Senior Centers")+
+            geom_text(aes(label=places), check_overlap = F, show.legend = F, size = 3, vjust = 2)+
+            theme_minimal()
+        
+        
+        ggplotly(k)
+        
+    })
+    
     output$downloadPAhourly <- downloadHandler(
 
         filename = function() {
