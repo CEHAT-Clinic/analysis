@@ -67,9 +67,11 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
 
                                          br(),
-                                         p("After creating the desired plots, download this report as a pdf or html file by clicking the", strong("button"), "below"),
+                                         p("After creating the desired plots, download this report as a pdf or a word document by clicking the", strong("button"), "below."),
+                                         p("To create a static (uneditable) report select the word document option. Otherwise, leave the format set to pdf."),
                                          p("The report can only be uploaded with datasets that have been generated, so make sure to go to each page to ensure every plot is loaded."),
                                          br(),
+                                         radioButtons('format', 'Document format', c('PDF', 'Word')),
                                          downloadButton("report", "Generate report")
 
 
@@ -94,8 +96,6 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 
                                              strong("Compare Diurnal Patterns to a Shorter Time Period"),
                                              uiOutput("dateRange4")
-                                             # selectInput("month", label = "Choose month(s):",
-                                             #             choices = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "November", "December"), selected = "December")
 
 
                                          ),
@@ -180,7 +180,7 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                                              uiOutput("sensor"),
                                              p("Histogram of Highs Slider"),
                                              selectInput("n_breaks", label = "Number of bins:",
-                                                         choices = c(4, 8, 16, 24), selected = 8),
+                                                         choices = c(4, 8, 16, 24), selected = 8)
 
                                          ),
                                          mainPanel(
@@ -1348,7 +1348,7 @@ server <- function(input, output) {
                 geom_bar(position="dodge", stat="identity") +
                 ggtitle("Days over EPA threshold in South Gate")}
 
-        else{ 
+        else{
             epahist <- ggtitle("No days are over the EPA threshold for this month.") }
         ggplotly(epahist)
     })
@@ -1530,7 +1530,10 @@ server <- function(input, output) {
 
 
     output$report <- downloadHandler(
-        filename = "report.pdf",
+        filename = function() {
+            paste('report', sep = '.', switch(
+                input$format, PDF = 'pdf', Word = 'docx'))
+        },
 
         content = function(file) {
             src <- normalizePath('report.Rmd')
@@ -1556,7 +1559,8 @@ server <- function(input, output) {
                            under = readingsUnder() )
 
             library(rmarkdown)
-            out <- render('report.Rmd', params = params, pdf_document(), envir = new.env(parent = globalenv()))
+            out <- render('report.Rmd', params = params, switch(
+                input$format, PDF = pdf_document(), Word = word_document() ), envir = new.env(parent = globalenv()))
             file.rename(out, file)
         }
     )
