@@ -735,7 +735,7 @@ sensitiveLocations <- function(data,time){
                                                  -118.2255,-118.223,-118.1895,-118.1695,-118.1695,-118.1860,
                                                  -118.2100,-118.2025,-118.2065,-118.1990,-118.184,-118.182,
                                                  -118.209,-118.2),
-                                   PM25 = rep(0,20))
+                                   AQI = rep(0,20))
 
   predictions<- as.data.frame(krigePA(data,time))
   predictions$x <- round(predictions$x,4)
@@ -745,7 +745,7 @@ sensitiveLocations <- function(data,time){
     pm <- filter(predictions,y == sensitiveLocations$latitude[place] &
                                        x == sensitiveLocations$longitude[place])
     if (length(pm$x) != 0){
-      sensitiveLocations$PM25[place] <- pm$var1.pred
+      sensitiveLocations$AQI[place] <- PurpleAirCEHAT::aqiFromPm25(pm$var1.pred)
       }
   
   }
