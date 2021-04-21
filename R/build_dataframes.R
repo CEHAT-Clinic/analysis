@@ -723,7 +723,7 @@ compareSensors <- function(data, type = c('a', 'b'), new){
 sensitiveLocations <- function(data,time){
   
   # sensitive locations
-  sensitiveLocations <- data.frame(places = c("Tweedy Elementary School", "Bryson Elementary School","South Gate Middle Sch","San Miguel School",
+  sensitiveLocations <- data.frame(places = c("Tweedy Elementary School", "Bryson Elementary School","South Gate Middle School","San Miguel School",
                                               "Stanford Elementary School","San Gabriel Elementary School","South East High School","Liberty Boulevard Elementary School",
                                               "South Gate Park","Circle Park","El Paseo Shopping Center","Azalea Shopping Center","MC Guadalupano",
                                               "MC Tweedy","MC Clinica Maria","MC Loyola", "MC United","South Gate SC", "South Gate Senior Villas SC","South Gate Park SC"),
@@ -745,7 +745,7 @@ sensitiveLocations <- function(data,time){
     pm <- filter(predictions,y == sensitiveLocations$latitude[place] &
                                        x == sensitiveLocations$longitude[place])
     if (length(pm$x) != 0){
-      sensitiveLocations$PMPred[place] <- pm$var1.pred
+      sensitiveLocations$PM25[place] <- pm$var1.pred
       }
   
   }
