@@ -1,24 +1,24 @@
 {
-    "id": "83E8E806",
-    "path": "~/forTesting/app.R",
+    "id": "CAC8C00E",
+    "path": "~/analysisApp/appLotenna.R",
     "project_path": null,
     "type": "r_source",
-    "hash": "609981329",
+    "hash": "1174395920",
     "contents": "",
     "dirty": false,
-    "created": 1618771315794.0,
+    "created": 1618806745674.0,
     "source_on_save": false,
     "relative_order": 2,
     "properties": {
-        "cursorPosition": "34,24",
-        "scrollLine": "15"
+        "cursorPosition": "532,2",
+        "scrollLine": "518"
     },
     "folds": "",
-    "lastKnownWriteTime": 1618634027,
+    "lastKnownWriteTime": 1618794243,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1618634027,
+    "last_content_update": 1618794243,
     "read_only": false,
     "read_only_alternatives": []
 }
