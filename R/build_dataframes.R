@@ -454,7 +454,7 @@ compareDataDF <- function(ourData,nameOfCity){
 #' @export
 #'
 overEPA <- function(ourData){
-
+  names(ourData)[2] <- "PM2.5"
   rolling <- data.frame(rollingmean = rollmean(ourData$PM2.5, 24))
   rolling[nrow(rolling)+ (length(ourData$PM2.5) - length(rolling$rollingmean)),] <- NA
   Sensor <- dplyr::bind_cols(ourData, rolling)
