@@ -475,7 +475,7 @@ overEPA_hist <- function(daysOver,numOfDays){
   list <- c()
   days <- c()
 
-  numOfDays <- 31
+  #numOfDays <- 31
   # find the frequency of the days over the EPA threshold
   for (day in (1:numOfDays)){
     freq <- 0
